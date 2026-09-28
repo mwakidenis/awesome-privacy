@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T00:16:43Z",
+  "generatedAt": "2026-09-28T04:40:44Z",
   "processedShas": [
     "02125ec429ec1ce9c5acdec1604703cb058a7887",
     "02231fb0a59ee43f93c6d0143640284cb7587d71",
@@ -127,6 +127,7 @@
     "8a5acefb4be375961dfda8fdc99e3a6ff028371e",
     "8c0cdf76b53040df0fe362941ca4a085d346ce8a",
     "8d3c89895f72fc663c6ebd0e68525ef8167b5a02",
+    "8d3c8ce675eb4b9345f93985a00a999397d298b4",
     "8ee48cc161dd204f6eea70e8988ad3d4eb17e0c7",
     "906ceba8d144bc074ceab3872424f3dd5d205fa5",
     "90d8ef9b928ed9abb25b3c2480717e6174451488",
@@ -466,9 +467,1281 @@
     816,
     817,
     818,
-    819
+    819,
+    821,
+    822,
+    823
   ],
   "entries": [
+    {
+      "date": "2026-09-28",
+      "sha": "8d3c8ce675eb4b9345f93985a00a999397d298b4",
+      "pr": null,
+      "changes": {
+        "services": {
+          "added": [
+            {
+              "name": "Paperweight",
+              "category": "Communication",
+              "section": "Email Security Tools"
+            },
+            {
+              "name": "Xeres",
+              "category": "Communication",
+              "section": "Team Collaboration"
+            },
+            {
+              "name": "Zulip",
+              "category": "Communication",
+              "section": "Team Collaboration"
+            },
+            {
+              "name": "ShareX",
+              "category": "Creativity",
+              "section": "Screenshot Tools"
+            },
+            {
+              "name": "Bruno",
+              "category": "Development",
+              "section": "Developer Tools"
+            },
+            {
+              "name": "DevToys",
+              "category": "Development",
+              "section": "Developer Tools"
+            },
+            {
+              "name": "gitGost",
+              "category": "Development",
+              "section": "Developer Tools"
+            },
+            {
+              "name": "VSCodium",
+              "category": "Development",
+              "section": "IDEs"
+            },
+            {
+              "name": "Alacritty",
+              "category": "Development",
+              "section": "Terminal Emulators"
+            },
+            {
+              "name": "Mullvad Browser",
+              "category": "Essentials",
+              "section": "Browsers"
+            },
+            {
+              "name": "2of3 by Ente",
+              "category": "Essentials",
+              "section": "Password Managers"
+            },
+            {
+              "name": "PaperVault",
+              "category": "Essentials",
+              "section": "Password Managers"
+            },
+            {
+              "name": "PriEco",
+              "category": "Essentials",
+              "section": "Search Engines"
+            },
+            {
+              "name": "BeeCount",
+              "category": "Finance",
+              "section": "Secure Budgeting"
+            },
+            {
+              "name": "rotki",
+              "category": "Finance",
+              "section": "Secure Budgeting"
+            },
+            {
+              "name": "VERT",
+              "category": "Media",
+              "section": "File Converters"
+            },
+            {
+              "name": "Heroic Games Launcher",
+              "category": "Media",
+              "section": "Gaming"
+            },
+            {
+              "name": "Ente Photos",
+              "category": "Media",
+              "section": "Photo Management"
+            },
+            {
+              "name": "Immich",
+              "category": "Media",
+              "section": "Photo Management"
+            },
+            {
+              "name": "AntennaPod",
+              "category": "Media",
+              "section": "Podcast Players"
+            },
+            {
+              "name": "qBittorrent",
+              "category": "Media",
+              "section": "Torrent Downloaders"
+            },
+            {
+              "name": "VLC Media Player",
+              "category": "Media",
+              "section": "Video Players"
+            },
+            {
+              "name": "AdGuard Home",
+              "category": "Networking",
+              "section": "Ad Blockers"
+            },
+            {
+              "name": "1984",
+              "category": "Networking",
+              "section": "Cloud Hosting"
+            },
+            {
+              "name": "Bunker",
+              "category": "Networking",
+              "section": "Cloud Hosting"
+            },
+            {
+              "name": "Infomaniak",
+              "category": "Networking",
+              "section": "Cloud Hosting"
+            },
+            {
+              "name": "BunkerWeb",
+              "category": "Networking",
+              "section": "Firewalls"
+            },
+            {
+              "name": "SysWarden",
+              "category": "Operating Systems",
+              "section": "Linux Defenses"
+            },
+            {
+              "name": "Win11Debloat",
+              "category": "Operating Systems",
+              "section": "Windows Defences"
+            },
+            {
+              "name": "Vocalinux",
+              "category": "Productivity",
+              "section": "Accessibility"
+            },
+            {
+              "name": "Fossify Calendar",
+              "category": "Productivity",
+              "section": "Calendar"
+            },
+            {
+              "name": "KashCal",
+              "category": "Productivity",
+              "section": "Calendar"
+            },
+            {
+              "name": "Nextcloud Calendar",
+              "category": "Productivity",
+              "section": "Calendar"
+            },
+            {
+              "name": "Poznote",
+              "category": "Productivity",
+              "section": "Digital Notes"
+            },
+            {
+              "name": "Koofr",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage"
+            },
+            {
+              "name": "OpenHabitTracker",
+              "category": "Productivity",
+              "section": "Habit Trackers"
+            },
+            {
+              "name": "CoMaps",
+              "category": "Productivity",
+              "section": "Maps & Navigation"
+            },
+            {
+              "name": "Rallly",
+              "category": "Productivity",
+              "section": "Scheduling"
+            },
+            {
+              "name": "Tymeslot",
+              "category": "Productivity",
+              "section": "Scheduling"
+            },
+            {
+              "name": "Mindwtr",
+              "category": "Productivity",
+              "section": "Task Management"
+            },
+            {
+              "name": "DeArrow",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "LibRedirect",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "SponsorBlock",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "Spectre",
+              "category": "Security Tools",
+              "section": "Mobile Apps"
+            },
+            {
+              "name": "Secluso",
+              "category": "Smart Home & IoT",
+              "section": "Security Cameras"
+            },
+            {
+              "name": "Gadgetbridge",
+              "category": "Smart Home & IoT",
+              "section": "Wearables & Health"
+            },
+            {
+              "name": "Lemmy",
+              "category": "Social",
+              "section": "Social Networks"
+            }
+          ],
+          "removed": [
+            {
+              "name": "Session",
+              "category": "Communication",
+              "section": "Encrypted Messaging"
+            },
+            {
+              "name": "33Mail",
+              "category": "Communication",
+              "section": "Mail Forwarding"
+            },
+            {
+              "name": "ForwardEmail",
+              "category": "Communication",
+              "section": "Mail Forwarding"
+            },
+            {
+              "name": "ProtonMail",
+              "category": "Communication",
+              "section": "Mail Forwarding"
+            },
+            {
+              "name": "Internet Relay Chat",
+              "category": "Communication",
+              "section": "Team Collaboration"
+            },
+            {
+              "name": "RetroShare",
+              "category": "Communication",
+              "section": "Team Collaboration"
+            },
+            {
+              "name": "Cromite",
+              "category": "Essentials",
+              "section": "Browsers"
+            },
+            {
+              "name": "Padloc",
+              "category": "Essentials",
+              "section": "Password Managers"
+            },
+            {
+              "name": "Qwant",
+              "category": "Essentials",
+              "section": "Search Engines"
+            },
+            {
+              "name": "Atomic Wallet",
+              "category": "Finance",
+              "section": "Crypto Wallets"
+            },
+            {
+              "name": "ColdCard",
+              "category": "Finance",
+              "section": "Crypto Wallets"
+            },
+            {
+              "name": "Revolut Premium",
+              "category": "Finance",
+              "section": "Virtual Credit Cards"
+            },
+            {
+              "name": "BlockParty",
+              "category": "Networking",
+              "section": "Ad Blockers"
+            },
+            {
+              "name": "Private Layer",
+              "category": "Networking",
+              "section": "Cloud Hosting"
+            },
+            {
+              "name": "Servers Guru",
+              "category": "Networking",
+              "section": "Cloud Hosting"
+            },
+            {
+              "name": "DNS Cloak",
+              "category": "Networking",
+              "section": "DNS Clients"
+            },
+            {
+              "name": "Fortress",
+              "category": "Operating Systems",
+              "section": "Mac OS Defences"
+            },
+            {
+              "name": "DivestOS",
+              "category": "Operating Systems",
+              "section": "Mobile Operating Systems"
+            },
+            {
+              "name": "PrivaZer",
+              "category": "Operating Systems",
+              "section": "Windows Defences"
+            },
+            {
+              "name": "SpyDish",
+              "category": "Operating Systems",
+              "section": "Windows Defences"
+            },
+            {
+              "name": "Sticky-Keys-Slayer",
+              "category": "Operating Systems",
+              "section": "Windows Defences"
+            },
+            {
+              "name": "Windows Secure Baseline",
+              "category": "Operating Systems",
+              "section": "Windows Defences"
+            },
+            {
+              "name": "AFFiNE",
+              "category": "Productivity",
+              "section": "Digital Notes"
+            },
+            {
+              "name": "Sync.com",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage"
+            },
+            {
+              "name": "pCloud",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage"
+            },
+            {
+              "name": "CSS Exfil Protection",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "First Party Isolation",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "HTTPZ",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "Privacy Redirect",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "ScriptSafe",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "Track Me Not",
+              "category": "Security Tools",
+              "section": "Browser Extensions"
+            },
+            {
+              "name": "DPI Tunnel",
+              "category": "Security Tools",
+              "section": "Mobile Apps"
+            },
+            {
+              "name": "Haven",
+              "category": "Security Tools",
+              "section": "Mobile Apps"
+            },
+            {
+              "name": "SnoopSnitch",
+              "category": "Security Tools",
+              "section": "Mobile Apps"
+            },
+            {
+              "name": "XPrivacyLua",
+              "category": "Security Tools",
+              "section": "Mobile Apps"
+            },
+            {
+              "name": "Minds",
+              "category": "Social",
+              "section": "Social Networks"
+            },
+            {
+              "name": "BitChute",
+              "category": "Social",
+              "section": "Video Platforms"
+            }
+          ],
+          "modified": [
+            {
+              "name": "Mozilla Thunderbird",
+              "category": "Communication",
+              "section": "Email Clients",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Email Privacy Tester",
+              "category": "Communication",
+              "section": "Email Security Tools",
+              "fields": [
+                "description",
+                "git",
+                "github",
+                "openSource"
+              ]
+            },
+            {
+              "name": "Matrix",
+              "category": "Communication",
+              "section": "Encrypted Messaging",
+              "fields": [
+                "description",
+                "github",
+                "subreddit"
+              ]
+            },
+            {
+              "name": "SimpleX",
+              "category": "Communication",
+              "section": "Encrypted Messaging",
+              "fields": [
+                "icon"
+              ]
+            },
+            {
+              "name": "XMPP",
+              "category": "Communication",
+              "section": "Encrypted Messaging",
+              "fields": [
+                "icon"
+              ]
+            },
+            {
+              "name": "SimpleLogin",
+              "category": "Communication",
+              "section": "Mail Forwarding",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Briar",
+              "category": "Communication",
+              "section": "P2P Messaging",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Tox & qTox client",
+              "category": "Communication",
+              "section": "P2P Messaging",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Element",
+              "category": "Communication",
+              "section": "Team Collaboration",
+              "fields": [
+                "androidApp",
+                "description",
+                "icon",
+                "iosApp",
+                "openSource",
+                "securityAudited"
+              ]
+            },
+            {
+              "name": "Mattermost",
+              "category": "Communication",
+              "section": "Team Collaboration",
+              "fields": [
+                "description",
+                "openSource",
+                "url"
+              ]
+            },
+            {
+              "name": "Rocket.Chat",
+              "category": "Communication",
+              "section": "Team Collaboration",
+              "fields": [
+                "description",
+                "tosdrId"
+              ]
+            },
+            {
+              "name": "Jmp.chat",
+              "category": "Communication",
+              "section": "Virtual Phone Numbers",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "MoneroSMS",
+              "category": "Communication",
+              "section": "Virtual Phone Numbers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Codeberg",
+              "category": "Development",
+              "section": "Code Hosting",
+              "fields": [
+                "codeberg"
+              ]
+            },
+            {
+              "name": "GitLab",
+              "category": "Development",
+              "section": "Code Hosting",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Gitea",
+              "category": "Development",
+              "section": "Code Hosting",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Gogs",
+              "category": "Development",
+              "section": "Code Hosting",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "SourceHut",
+              "category": "Development",
+              "section": "Code Hosting",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Authenticator GNOME",
+              "category": "Essentials",
+              "section": "2-Factor Authentication",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Ente Auth",
+              "category": "Essentials",
+              "section": "2-Factor Authentication",
+              "fields": [
+                "description",
+                "discordInvite",
+                "github",
+                "icon",
+                "securityAudited",
+                "subreddit",
+                "url"
+              ]
+            },
+            {
+              "name": "Brave Browser",
+              "category": "Essentials",
+              "section": "Browsers",
+              "fields": [
+                "androidApp",
+                "description",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "Firefox",
+              "category": "Essentials",
+              "section": "Browsers",
+              "fields": [
+                "androidApp",
+                "description",
+                "git",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "LibreWolf",
+              "category": "Essentials",
+              "section": "Browsers",
+              "fields": [
+                "codeberg",
+                "description"
+              ]
+            },
+            {
+              "name": "Tor Browser",
+              "category": "Essentials",
+              "section": "Browsers",
+              "fields": [
+                "description",
+                "git"
+              ]
+            },
+            {
+              "name": "KeePass",
+              "category": "Essentials",
+              "section": "Password Managers",
+              "fields": [
+                "git",
+                "icon",
+                "openSource",
+                "securityAudited",
+                "tosdrId"
+              ]
+            },
+            {
+              "name": "Pass",
+              "category": "Essentials",
+              "section": "Password Managers",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "ProtonPass",
+              "category": "Essentials",
+              "section": "Password Managers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "DuckDuckGo",
+              "category": "Essentials",
+              "section": "Search Engines",
+              "fields": [
+                "description",
+                "openSource"
+              ]
+            },
+            {
+              "name": "Startpage",
+              "category": "Essentials",
+              "section": "Search Engines",
+              "fields": [
+                "androidApp",
+                "description",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "Bisq",
+              "category": "Finance",
+              "section": "Crypto Exchanges",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "CryptoSteel",
+              "category": "Finance",
+              "section": "Crypto Wallets",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Njalla",
+              "category": "Networking",
+              "section": "Cloud Hosting",
+              "fields": [
+                "description",
+                "openSource",
+                "securityAudited",
+                "url"
+              ]
+            },
+            {
+              "name": "AdGuard",
+              "category": "Networking",
+              "section": "DNS Providers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "NextDNS",
+              "category": "Networking",
+              "section": "DNS Providers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Orange Website",
+              "category": "Networking",
+              "section": "Domain Registrars",
+              "fields": [
+                "description",
+                "openSource",
+                "securityAudited"
+              ]
+            },
+            {
+              "name": "Lockdown",
+              "category": "Networking",
+              "section": "Firewalls",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "OPNSense",
+              "category": "Networking",
+              "section": "Firewalls",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Shorewall",
+              "category": "Networking",
+              "section": "Firewalls",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Uncomplicated Firewall",
+              "category": "Networking",
+              "section": "Firewalls",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Privoxy",
+              "category": "Networking",
+              "section": "Proxies",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "ClamAV",
+              "category": "Operating Systems",
+              "section": "Anti-Malware",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Alpine Linux",
+              "category": "Operating Systems",
+              "section": "Desktop Operating Systems",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Parrot",
+              "category": "Operating Systems",
+              "section": "Desktop Operating Systems",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Qubes OS",
+              "category": "Operating Systems",
+              "section": "Desktop Operating Systems",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Tails",
+              "category": "Operating Systems",
+              "section": "Desktop Operating Systems",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Whonix",
+              "category": "Operating Systems",
+              "section": "Desktop Operating Systems",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "BleachBit",
+              "category": "Operating Systems",
+              "section": "Linux Defenses",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Gufw",
+              "category": "Operating Systems",
+              "section": "Linux Defenses",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Snort",
+              "category": "Operating Systems",
+              "section": "Linux Defenses",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "CalyxOS",
+              "category": "Operating Systems",
+              "section": "Mobile Operating Systems",
+              "fields": [
+                "description",
+                "git",
+                "github",
+                "openSource"
+              ]
+            },
+            {
+              "name": "BleachBit",
+              "category": "Operating Systems",
+              "section": "Windows Defences",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "NextCloud",
+              "category": "Productivity",
+              "section": "Backup and Sync",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "VNote",
+              "category": "Productivity",
+              "section": "Digital Notes",
+              "fields": [
+                "description"
+              ]
+            },
+            {
+              "name": "FileN",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage",
+              "fields": [
+                "androidApp",
+                "github",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "IceDrive",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage",
+              "fields": [
+                "androidApp",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "Internxt",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage",
+              "fields": [
+                "androidApp",
+                "github",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "Peergos",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage",
+              "fields": [
+                "androidApp",
+                "github"
+              ]
+            },
+            {
+              "name": "Tresorit",
+              "category": "Productivity",
+              "section": "Encrypted Cloud Storage",
+              "fields": [
+                "androidApp",
+                "iosApp"
+              ]
+            },
+            {
+              "name": "FileSend",
+              "category": "Productivity",
+              "section": "File Drop",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "AmIUnique Timeline",
+              "category": "Security Tools",
+              "section": "Browser Extensions",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Decentraleyes",
+              "category": "Security Tools",
+              "section": "Browser Extensions",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "LocalCDN",
+              "category": "Security Tools",
+              "section": "Browser Extensions",
+              "fields": [
+                "codeberg"
+              ]
+            },
+            {
+              "name": "Privacy Badger",
+              "category": "Security Tools",
+              "section": "Browser Extensions",
+              "fields": [
+                "description"
+              ]
+            },
+            {
+              "name": "Exodus",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "F-Droid",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Greentooth",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "NetGuard",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "androidApp",
+                "icon"
+              ]
+            },
+            {
+              "name": "Orbot",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "androidApp",
+                "github",
+                "icon",
+                "iosApp",
+                "url"
+              ]
+            },
+            {
+              "name": "SuperFreezZ",
+              "category": "Security Tools",
+              "section": "Mobile Apps",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "Am I Unique?",
+              "category": "Security Tools",
+              "section": "Online Tools",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Blocked.org",
+              "category": "Security Tools",
+              "section": "Online Tools",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Tiny RSS",
+              "category": "Social",
+              "section": "News Readers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Invidious",
+              "category": "Social",
+              "section": "Proxy Sites",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Nitter",
+              "category": "Social",
+              "section": "Proxy Sites",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "DTube",
+              "category": "Social",
+              "section": "Video Platforms",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "PeerTube",
+              "category": "Social",
+              "section": "Video Platforms",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Secure Remove",
+              "category": "Utilities",
+              "section": "Data Erasers",
+              "fields": [
+                "icon",
+                "url"
+              ]
+            },
+            {
+              "name": "shred",
+              "category": "Utilities",
+              "section": "Data Erasers",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "GPG Suite",
+              "category": "Utilities",
+              "section": "PGP Managers",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Kleopatra",
+              "category": "Utilities",
+              "section": "PGP Managers",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "SeaHorse",
+              "category": "Utilities",
+              "section": "PGP Managers",
+              "fields": [
+                "git"
+              ]
+            },
+            {
+              "name": "VirtualBox",
+              "category": "Utilities",
+              "section": "Virtual Machines",
+              "fields": [
+                "github"
+              ]
+            },
+            {
+              "name": "Xen Project",
+              "category": "Utilities",
+              "section": "Virtual Machines",
+              "fields": [
+                "git"
+              ]
+            }
+          ],
+          "moved": [
+            {
+              "name": "Forward Email",
+              "from": {
+                "category": "Communication",
+                "section": "Encrypted Email"
+              },
+              "to": {
+                "category": "Communication",
+                "section": "Mail Forwarding"
+              }
+            },
+            {
+              "name": "Freenet",
+              "from": {
+                "category": "Networking",
+                "section": "Mix Networks"
+              },
+              "to": {
+                "category": "Networking",
+                "section": "Anonymity Networks"
+              }
+            },
+            {
+              "name": "I2P",
+              "from": {
+                "category": "Networking",
+                "section": "Mix Networks"
+              },
+              "to": {
+                "category": "Networking",
+                "section": "Anonymity Networks"
+              }
+            },
+            {
+              "name": "Tor",
+              "from": {
+                "category": "Networking",
+                "section": "Mix Networks"
+              },
+              "to": {
+                "category": "Networking",
+                "section": "Anonymity Networks"
+              }
+            },
+            {
+              "name": "Vikunja",
+              "from": {
+                "category": "Productivity",
+                "section": "Cloud Productivity Suites"
+              },
+              "to": {
+                "category": "Productivity",
+                "section": "Task Management"
+              }
+            }
+          ]
+        },
+        "sections": {
+          "added": [
+            {
+              "name": "Developer Tools",
+              "category": "Development"
+            },
+            {
+              "name": "Photo Management",
+              "category": "Media"
+            },
+            {
+              "name": "Accessibility",
+              "category": "Productivity"
+            },
+            {
+              "name": "Habit Trackers",
+              "category": "Productivity"
+            },
+            {
+              "name": "Maps & Navigation",
+              "category": "Productivity"
+            },
+            {
+              "name": "Scheduling",
+              "category": "Productivity"
+            },
+            {
+              "name": "Security Cameras",
+              "category": "Smart Home & IoT"
+            },
+            {
+              "name": "Wearables & Health",
+              "category": "Smart Home & IoT"
+            }
+          ],
+          "removed": [
+            {
+              "name": "Developer Utilities",
+              "category": "Development"
+            },
+            {
+              "name": "Photo Viewers",
+              "category": "Media"
+            }
+          ],
+          "moved": [
+            {
+              "from": {
+                "category": "Networking",
+                "section": "Mix Networks"
+              },
+              "to": {
+                "category": "Networking",
+                "section": "Anonymity Networks"
+              }
+            }
+          ]
+        },
+        "categories": {}
+      }
+    },
     {
       "date": "2026-09-24",
       "sha": "ad4621e651898e5467637421d5506880e09581ae",
@@ -7305,6 +8578,36 @@
     }
   ],
   "rejections": [
+    {
+      "date": "2026-09-27",
+      "title": "Adds Obfusk8 to Metadata Removal",
+      "pr": {
+        "number": 823,
+        "url": "https://github.com/lissy93/awesome-privacy/pull/823",
+        "author": "EpicFail20",
+        "authorAvatar": "https://avatars.githubusercontent.com/u/261627847?v=4"
+      }
+    },
+    {
+      "date": "2026-09-26",
+      "title": "Add FileOnTap – private browser-based file converter",
+      "pr": {
+        "number": 822,
+        "url": "https://github.com/lissy93/awesome-privacy/pull/822",
+        "author": "zjch022",
+        "authorAvatar": "https://avatars.githubusercontent.com/u/275394221?v=4"
+      }
+    },
+    {
+      "date": "2026-09-24",
+      "title": "Add FileOnTap – private browser-based file converter",
+      "pr": {
+        "number": 821,
+        "url": "https://github.com/lissy93/awesome-privacy/pull/821",
+        "author": "zjch022",
+        "authorAvatar": "https://avatars.githubusercontent.com/u/275394221?v=4"
+      }
+    },
     {
       "date": "2026-09-21",
       "title": "Add ShrinkKit to Metadata Removal",
