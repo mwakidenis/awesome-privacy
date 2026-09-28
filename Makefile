@@ -22,7 +22,7 @@
 
 # Targets
 .PHONY: all \
-    install_lib_deps gen_readme gen_changelog validate lib \
+    install_lib_deps gen_readme gen_changelog validate review review_diff lib \
     install_web_deps build_web start_web web
 
 # Get Python bin
@@ -44,6 +44,12 @@ validate: install_lib_deps
 
 gen_changelog: install_lib_deps
 	$(PYTHON) $(LIB_DIR)/generate-changelog.py
+
+review: install_lib_deps
+	$(PYTHON) $(LIB_DIR)/review-listings.py $(ARGS)
+
+review_diff: install_lib_deps
+	$(PYTHON) $(LIB_DIR)/review-listings.py --changed-since $(or $(BASE),main) $(ARGS)
 
 lib: install_lib_deps validate gen_readme gen_changelog
 

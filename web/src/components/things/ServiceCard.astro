@@ -1,5 +1,5 @@
 ---
-import { formatLink } from '@utils/parse-markdown';
+import { formatLink, codebergUrl } from '@utils/parse-markdown';
 import type { Service } from 'src/types/Service';
 import FontAwesome from '@components/form/FontAwesome.svelte';
 import SaveListing from '@components/things/SaveListing.svelte';
@@ -19,7 +19,7 @@ const { service, sectionName, categoryName } = Astro.props;
 	<div class="service-head">
 		<a
 			class="service-title"
-			href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}`}
+			href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}/`}
 		>
 			<h4>{service.name}</h4>
 		</a>
@@ -54,8 +54,22 @@ const { service, sectionName, categoryName } = Astro.props;
 				</a>
 			)
 		}
+		{
+			service.codeberg && (
+				<a class="link" href={codebergUrl(service.codeberg)}>
+					<FontAwesome iconName="sourceCode" /> Codeberg
+				</a>
+			)
+		}
+		{
+			service.git && (
+				<a class="link" href={service.git}>
+					<FontAwesome iconName="sourceCode" /> Source
+				</a>
+			)
+		}
 		<a
-			href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}`}
+			href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}/`}
 		>
 			<FontAwesome iconName="viewReport" /> View Report ➔
 		</a>

@@ -3,12 +3,12 @@ import FontAwesome from '@components/form/FontAwesome.svelte';
 import ThemeSwitcher from '@components/form/ThemeSwitcher.svelte';
 
 const navLinks = [
-	{ label: 'View All', href: '/all' },
-	{ label: 'Search', href: '/search' },
-	{ label: 'Changelog', href: '/changelog' },
-	{ label: 'API', href: '/api' },
-	{ label: 'Saved', href: '/inventory', id: 'saved-nav-link', hidden: true },
-	{ label: 'About', href: '/about' },
+	{ label: 'View All', href: '/all/' },
+	{ label: 'Search', href: '/search/' },
+	{ label: 'Changelog', href: '/changelog/' },
+	// { label: 'API', href: '/api/' }, // TODO: restore once API is built out
+	{ label: 'Saved', href: '/inventory/', id: 'saved-nav-link', hidden: true },
+	{ label: 'About', href: '/about/' },
 	{
 		label: 'GitHub',
 		href: 'https://github.com/lissy93/awesome-privacy',
@@ -96,7 +96,7 @@ const navLinks = [
 
 <style lang="scss">
 	.site-header {
-		background: var(--accent-fg);
+		background: var(--surface);
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
@@ -123,7 +123,7 @@ const navLinks = [
 				transition: var(--transition-normal);
 			}
 			&:hover :global(svg) {
-				color: var(--accent);
+				color: var(--accent-text);
 				transform: scale(1.05);
 			}
 		}
@@ -173,20 +173,21 @@ const navLinks = [
 					background 0.3s ease-in-out,
 					color 0.3s ease-in-out;
 				&:hover {
-					color: var(--accent-fg);
 					&:nth-child(4n + 1) {
 						background: var(--accent);
+						color: var(--accent-fg);
 					}
 					&:nth-child(4n + 2) {
 						background: var(--accent-2);
-						color: var(--foreground);
+						color: var(--accent-2-fg);
 					}
 					&:nth-child(4n + 3) {
 						background: var(--accent-3);
+						color: var(--accent-3-fg);
 					}
 					&:nth-child(4n + 4) {
 						background: var(--accent-4);
-						color: var(--foreground);
+						color: var(--accent-4-fg);
 					}
 				}
 			}
@@ -233,7 +234,7 @@ const navLinks = [
 				position: absolute;
 				top: 100%;
 				left: 0;
-				background: var(--accent-fg);
+				background: var(--surface);
 				border-bottom: 2px solid var(--accent-3);
 				z-index: 100;
 				height: auto;
@@ -247,20 +248,9 @@ const navLinks = [
 					border-bottom: 1px solid var(--accent-3-translucent);
 				}
 				.theme-switcher {
-					display: none;
+					margin: var(--space-md) auto;
 				}
 			}
 		}
-	}
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		border: 0;
 	}
 </style>

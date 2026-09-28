@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Addition (PR)
+    url: https://github.com/lissy93/awesome-privacy/blob/main/.github/CONTRIBUTING.md
+    about: >-
+      To add a new software/service addition, please review the contributing guidelines and submit a PR.
+      Submissions via GitHub issues have been temporarily disabled due to excess spam and AI abuse.
+      For more info, see https://github.com/lissy93/awesome-privacy/discussions/596
+  - name: Ask a question
+    url: https://github.com/lissy93/awesome-privacy/discussions/categories/questions
+    about: Have a question? Use our Q&A category on GitHub Discussions

@@ -15,7 +15,9 @@ const { discordData } = Astro.props;
 		<li>
 			<span class="lbl">Server Name</span>
 			<span class="val"
-				><img src={discordData.icon} width="16" />{discordData.name}</span
+				><img src={discordData.icon} alt="" width="16" loading="lazy" />{
+					discordData.name
+				}</span
 			>
 		</li>
 		<li>
@@ -44,7 +46,13 @@ const { discordData } = Astro.props;
 
 	{
 		discordData.banner && (
-			<img class="banner" width="300" src={discordData.banner} />
+			<img
+				class="banner"
+				width="300"
+				src={discordData.banner}
+				alt={`${discordData.name} banner`}
+				loading="lazy"
+			/>
 		)
 	}
 </div>

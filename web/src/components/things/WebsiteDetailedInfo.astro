@@ -41,13 +41,21 @@ else if (risk >= 75) riskText = 'very dangerous';
 
 const screenshotUrl = `https://screenshot-cache.as93.workers.dev/${url}`;
 
+let webCheckTarget: string;
+try {
+  webCheckTarget = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).host;
+} catch {
+  webCheckTarget = encodeURIComponent(url);
+}
+const webCheckLink = `https://web-check.xyz/check/${webCheckTarget}`;
+
 ---
 
 <div class="website-info-wrapper">
   <div class="left">
     <h4>Website</h4>
     <p class="website-title">
-      <img src={`https://favicone.com/${websiteInfo.url_parts.host}`} width="16" />
+      <img src={`https://favicone.com/${websiteInfo.url_parts.host}`} alt="" width="16" loading="lazy" />
       {websiteInfo.web_page.title}
     </p>
     <p class="website-description">{websiteInfo.web_page.description}</p>
@@ -127,7 +135,7 @@ const screenshotUrl = `https://screenshot-cache.as93.workers.dev/${url}`;
     <ul>
       {websiteInfo.geo_location.countries.map((country) => (
         <li>
-          <img width="16" src={`https://flagcdn.com/48x36/${country.toLowerCase()}.png`} />
+          <img width="16" src={`https://flagcdn.com/48x36/${country.toLowerCase()}.png`} alt={country} loading="lazy" />
           {country}
         </li>
       ))}
@@ -160,10 +168,14 @@ const screenshotUrl = `https://screenshot-cache.as93.workers.dev/${url}`;
       ))}
     </ul>
     <h4>Website Preview</h4>
-    <img class="preview-shot" src={screenshotUrl} width="300" height="50" />
+    <img class="preview-shot" src={screenshotUrl} alt="Website preview" width="300" height="50" loading="lazy" />
     <div class="link-to-web-check">
-      <Button url={`https://web-check.xyz/check/${url}`}>
-        <span>View full report at</span><br /><b class="web-check-title">web-check.xyz</b>
+      <Button url={webCheckLink} target="_blank" rel="noopener">
+      	<img width="32" height="32" src="https://web-check.xyz/favicon.svg" alt="" loading="lazy" />
+       <div class="btn-text">
+      	  <span>View full report at</span>
+          <b class="web-check-title">web-check.xyz</b>
+       	</div>
       </Button>
     </div>
 
@@ -263,21 +275,31 @@ const screenshotUrl = `https://screenshot-cache.as93.workers.dev/${url}`;
   }
 
   .link-to-web-check {
-    width: 180px;
+    width: 260px;
     float: right;
     font-size: var(--text-base);
     transform: scale(0.8);
-    opacity: var(--opacity-subtle);
     transition: var(--transition-normal);
-    &:hover { transform: scale(0.85); opacity: 1; }
     :global(.button) {
       background: var(--accent-3);
+    }
+    :global(.button a) {
+      color: var(--accent-3-fg);
     }
     span {
       font-size: var(--text-sm);
     }
     .web-check-title {
       font-size: var(--text-lg);
+    }
+    :global(a) {
+    	display: flex;
+      gap: var(--space-md);
+    	.btn-text {
+	    	display: flex;
+	     	flex-direction: column;
+				text-align: left;
+     	}
     }
   }
 

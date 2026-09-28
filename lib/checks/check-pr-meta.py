@@ -7,11 +7,11 @@ import re
 import subprocess
 import sys
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s [%(filename)s] %(message)s",
-    stream=sys.stderr,
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 FINDINGS_PATH = "/tmp/findings-compliance.json"
 
@@ -50,7 +50,7 @@ MISSING_TYPE_MSG = (
 )
 
 _VALID_TYPES = re.compile(
-    r"addition|amendment|removal|spelling|grammar|website|lib|ci|api|misc|other",
+    r"addition|amendment|removal|spelling|grammar|website|scripts|lib|ci|api|misc|other",
     re.IGNORECASE,
 )
 
@@ -135,7 +135,7 @@ def check_bot_coauthors(base_ref):
         if _BOT_AUTHOR_RE.search(result.stdout):
             return BOT_MSG
     except Exception as exc:
-        logging.warning("check_bot_coauthors error: %s", exc)
+        logger.warning("check_bot_coauthors error: %s", exc)
     return None
 
 
@@ -161,6 +161,8 @@ def main():
         draft = os.environ.get("PR_DRAFT", "false")
         readme_failed = os.environ.get("README_FAILED", "false")
         base_ref = os.environ.get("BASE_REF", "")
+
+        logger.info("Checking PR metadata: title, draft, template, checkboxes, type, bot authors")
 
         finding = check_bot_coauthors(base_ref)
         if finding:
@@ -195,9 +197,10 @@ def main():
         if finding:
             findings.append({"msg": finding, "level": "error"})
     except Exception as exc:
-        logging.error("Unhandled error in main: %s", exc, exc_info=True)
+        logger.error("Unhandled error in main: %s", exc, exc_info=True)
 
-    logging.info("Writing %d finding(s) to %s", len(findings), FINDINGS_PATH)
+    logger.info("PR metadata: %d finding(s)%s, writing to %s",
+                len(findings), " (critical)" if critical else "", FINDINGS_PATH)
     write_findings(findings)
     sys.exit(1 if critical else 0)
 

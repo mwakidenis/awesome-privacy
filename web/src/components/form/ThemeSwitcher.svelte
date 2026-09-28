@@ -1,57 +1,44 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { writable } from 'svelte/store';
+  import FontAwesome from '@components/form/FontAwesome.svelte';
 
-  // Define a store for the theme which reacts to changes
-  let theme = writable('dark');
+  let theme = $state('dark');
 
-  // On component mount, check local storage for a theme setting
   onMount(() => {
-    const storedTheme = localStorage.getItem('theme');
-    theme.set(storedTheme || 'dark');
-    applyTheme(storedTheme || 'dark');
+    theme = document.documentElement.dataset.theme || 'dark';
   });
 
-  // Function to toggle theme between light and dark
   function toggleTheme(): void {
-    theme.update((currentTheme) => {
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', newTheme);
-      applyTheme(newTheme);
-      return newTheme;
-    });
-  }
-
-  // Function to apply the theme by setting the attribute on the <html> element
-  function applyTheme(selectedTheme: string): void {
-    document.documentElement.setAttribute('data-theme', selectedTheme);
+    theme = theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', theme);
+    document.documentElement.dataset.theme = theme;
   }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<div class="theme-switcher" on:click={toggleTheme}>
-  <div class={`toggle ${$theme}`}>
-    <span class="theme-icon">🌘</span>
-    <span class="theme-icon">☀️</span>
-  </div>
-</div>
+<button
+  class="theme-switcher"
+  onclick={toggleTheme}
+  aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+>
+  <span class={`toggle ${theme}`}>
+    <span class="theme-icon"><FontAwesome iconName="themeDark" /></span>
+    <span class="theme-icon"><FontAwesome iconName="themeLight" /></span>
+  </span>
+</button>
 
 <style lang="scss">
   .theme-switcher {
     cursor: pointer;
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    padding: var(--space-xs);
     border: var(--border-heavy);
     border-radius: var(--curve-lg);
-    padding: var(--space-xs);
-    background-color: rgba(255, 255, 255, 0.2);
-    transition: background-color 0.3s ease;
+    background: var(--surface-line);
     box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.3);
+      box-shadow: var(--shadow-sm-hover);
     }
   }
 
@@ -59,38 +46,46 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-sm);
     width: 4rem;
     height: 2rem;
-    background: var(--accent-fg);
-    border-radius: var(--curve-lg);
-    padding: var(--space-xs);
+    padding: 0 var(--space-sm);
+    box-sizing: border-box;
     position: relative;
-    transition: background 0.3s ease;
+    background: var(--surface);
+    border-radius: var(--curve-lg);
 
     &::before {
       content: '';
       position: absolute;
-      top: var(--space-xs);
+      top: 50%;
       left: var(--space-xs);
       width: 1.6rem;
       height: 1.6rem;
       border-radius: 50%;
-      background: var(--background);
-      opacity: var(--opacity-muted);
+      background: var(--accent-3);
       transition: transform 0.3s ease;
-    }
-
-    &.dark::before {
-      transform: translateX(0);
+      transform: translateY(-50%);
     }
 
     &:not(.dark)::before {
-      transform: translateX(2.2rem);
+      transform: translate(2.2rem, -50%);
     }
   }
 
   .theme-icon {
     display: flex;
-    font-size: 1.5rem;
+    z-index: 1;
+    color: var(--foreground);
+    :global(svg) {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  /* Whichever icon the knob sits under needs ink that reads on it */
+  .toggle.dark .theme-icon:first-child,
+  .toggle:not(.dark) .theme-icon:last-child {
+    color: var(--accent-3-fg);
   }
 </style>

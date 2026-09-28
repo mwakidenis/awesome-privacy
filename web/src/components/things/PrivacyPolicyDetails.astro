@@ -11,7 +11,7 @@ interface Props {
 
 const { privacyData } = Astro.props;
 
-const priv = privacyData.parameters;
+const priv = privacyData?.parameters;
 
 const getIconName = (clasification: string) => {
   if (clasification === 'good') return 'faceGood';
@@ -23,7 +23,7 @@ const getIconName = (clasification: string) => {
 // If two or more objects in privacyPolicy.points have the same title, remove the duplicates
 const removeDuplicates = () => {
   const seen = new Set();
-  return priv.points = priv.points.filter((point) => {
+  return priv.points = (priv.points || []).filter((point) => {
     if (seen.has(point.title)) {
       return false;
     }

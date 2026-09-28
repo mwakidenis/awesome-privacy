@@ -1,19 +1,19 @@
 ---
 import Layout from '@layouts/Layout.astro';
-import { fetchData } from '@utils/fetch-data';
 
 import Search from '@components/things/Search.svelte';
-
-const categories = (await fetchData())?.categories;
 ---
 
-<Layout title="Search | Awesome Privacy">
+<Layout
+	title="Search | Awesome Privacy"
+	description="Search hundreds of privacy-respecting apps and services by name, category or the mainstream product you want to replace."
+>
 	<section>
 		<h1>Search</h1>
-		<Search client:visible data={categories} />
+		<Search client:visible />
 		<p class="sitemap-link">
-			Browse <a href="/all">all listings</a>, or see all pages in the <a
-				href="/sitemap">Sitemap</a
+			Browse <a href="/all/">all listings</a>, or see all pages in the <a
+				href="/sitemap/">Sitemap</a
 			>
 		</p>
 	</section>
@@ -24,7 +24,7 @@ const categories = (await fetchData())?.categories;
 		display: flex;
 		flex-direction: column;
 		box-shadow: var(--shadow-md);
-		background: var(--accent-fg);
+		background: var(--surface);
 		border: var(--border-heavy);
 		border-radius: var(--curve-sm);
 		margin: var(--space-lg) auto;
@@ -35,7 +35,7 @@ const categories = (await fetchData())?.categories;
 
 		h1 {
 			font-size: var(--text-4xl);
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			font-family: var(--font-subtitle);
 			text-align: center;
 			margin: var(--space-md) 0;

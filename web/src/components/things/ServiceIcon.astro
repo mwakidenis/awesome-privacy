@@ -6,9 +6,10 @@ interface Props {
 	url: string;
 	icon?: string;
 	size?: number;
+	eager?: boolean; // Set on above-the-fold icons, so they aren't deferred
 }
 
-const { name, url, icon, size = 40 } = Astro.props;
+const { name, url, icon, size = 40, eager = false } = Astro.props;
 const src = icon || `https://icon.horse/icon/${formatLink(url)}`;
 const horseSrc = `https://icon.horse/icon/${formatLink(url)}`;
 const iconSize = Math.round(size * 0.45);
@@ -39,7 +40,7 @@ const iconSize = Math.round(size * 0.45);
 	<img
 		width={size}
 		height={size}
-		loading="lazy"
+		loading={eager ? 'eager' : 'lazy'}
 		decoding="async"
 		class="service-icon"
 		alt={name}
@@ -89,7 +90,7 @@ const iconSize = Math.round(size * 0.45);
 			background: var(--accent-3-translucent);
 		}
 		.icon-state {
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 		}
 		.icon-state.broken {
 			display: none;
@@ -103,6 +104,7 @@ const iconSize = Math.round(size * 0.45);
 		.service-icon {
 			position: absolute;
 			inset: 0;
+			object-fit: contain;
 			border-radius: var(--curve-sm);
 			font-size: 0;
 		}

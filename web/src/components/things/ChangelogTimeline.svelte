@@ -7,8 +7,11 @@
   } from '../../utils/fetch-changelog';
   import { slugify } from '@utils/fetch-data';
 
-  export let entries: ChangelogEntry[] = [];
-  export let rejections: Rejection[] = [];
+  interface Props {
+    entries?: ChangelogEntry[];
+    rejections?: Rejection[];
+  }
+  const { entries = [], rejections = [] }: Props = $props();
 
   type Filter = 'added' | 'removed' | 'modified' | 'rejected';
 
@@ -19,16 +22,23 @@
     { key: 'rejected', label: 'Rejections', icon: '✕' },
   ];
 
-  let on: Record<Filter, boolean> = {
+  let on: Record<Filter, boolean> = $state({
     added: true,
     removed: true,
     modified: true,
     rejected: true,
-  };
-  let searchQuery = '';
+  });
+  let searchQuery = $state('');
+
+  const MAX_VISIBLE_CHANGES = 8;
+  let expanded: Record<string, boolean> = $state({});
 
   function toggle(key: Filter) {
     on = { ...on, [key]: !on[key] };
+  }
+
+  function toggleExpanded(sha: string) {
+    expanded = { ...expanded, [sha]: !expanded[sha] };
   }
 
   type TimelineItem =
@@ -53,11 +63,17 @@
       added: s?.added || [],
       removed: s?.removed || [],
       modified: s?.modified || [],
+      moved: s?.moved || [],
+      renamed: s?.renamed || [],
     };
   };
   const sec = (e: ChangelogEntry) => {
     const s = e.changes?.sections;
-    return { added: s?.added || [], removed: s?.removed || [] };
+    return {
+      added: s?.added || [],
+      removed: s?.removed || [],
+      moved: s?.moved || [],
+    };
   };
   const cat = (e: ChangelogEntry) => {
     const c = e.changes?.categories;
@@ -79,7 +95,11 @@
         (s.removed.length > 0 ||
           sc.removed.length > 0 ||
           ct.removed.length > 0)) ||
-      (f.modified && s.modified.length > 0)
+      (f.modified &&
+        (s.modified.length > 0 ||
+          s.moved.length > 0 ||
+          s.renamed.length > 0 ||
+          sc.moved.length > 0))
     );
   }
 
@@ -92,10 +112,23 @@
         (item.pr.author?.toLowerCase().includes(q) ?? false)
       );
     }
+    const s = svc(item.data);
     const all = [
-      ...svc(item.data).added,
-      ...svc(item.data).removed,
-      ...svc(item.data).modified,
+      ...s.added,
+      ...s.removed,
+      ...s.modified,
+      ...s.moved.flatMap((m) => [
+        { name: m.name, category: m.from.category, section: m.from.section },
+        { name: m.name, category: m.to.category, section: m.to.section },
+      ]),
+      ...s.renamed.flatMap((m) => [
+        {
+          name: m.previousName,
+          category: m.from.category,
+          section: m.from.section,
+        },
+        { name: m.name, category: m.to.category, section: m.to.section },
+      ]),
     ];
     return (
       all.some(
@@ -116,15 +149,18 @@
     if (s.added.length) parts.push(pl(s.added.length, 'addition'));
     if (s.removed.length) parts.push(pl(s.removed.length, 'removal'));
     if (s.modified.length) parts.push(pl(s.modified.length, 'amendment'));
+    if (s.moved.length) parts.push(pl(s.moved.length, 'move'));
+    if (s.renamed.length) parts.push(pl(s.renamed.length, 'rename'));
     if (sc.added.length) parts.push(pl(sc.added.length, 'new section'));
     if (sc.removed.length) parts.push(pl(sc.removed.length, 'section removal'));
+    if (sc.moved.length) parts.push(pl(sc.moved.length, 'section rename'));
     return parts.join(', ') || 'Changes';
   }
 
   function serviceLink(s: ServiceChange, isRemoval: boolean): string {
     const c = slugify(s.category),
       sc = slugify(s.section);
-    return isRemoval ? `/${c}/${sc}` : `/${c}/${sc}/${slugify(s.name)}`;
+    return isRemoval ? `/${c}/${sc}/` : `/${c}/${sc}/${slugify(s.name)}/`;
   }
 
   type ChangeRow = {
@@ -132,7 +168,7 @@
     cls: string;
     name: string;
     href: string;
-    path: string;
+    path?: string;
     fields?: string[];
   };
 
@@ -163,17 +199,53 @@
         path: `in ${v.category} › ${v.section}`,
         fields: v.fields,
       })),
+      ...s.moved.map((v) => ({
+        badge: 'Moved',
+        cls: 'mod',
+        name: v.name,
+        href: serviceLink(
+          { name: v.name, category: v.to.category, section: v.to.section },
+          false,
+        ),
+        path: `from ${v.from.category} › ${v.from.section} → ${v.to.category} › ${v.to.section}`,
+      })),
+      ...s.renamed.map((v) => {
+        const sameLoc =
+          v.from.category === v.to.category && v.from.section === v.to.section;
+        return {
+          badge: 'Renamed',
+          cls: 'mod',
+          name: `${v.previousName} → ${v.name}`,
+          href: serviceLink(
+            { name: v.name, category: v.to.category, section: v.to.section },
+            false,
+          ),
+          path: sameLoc
+            ? `in ${v.to.category} › ${v.to.section}`
+            : `from ${v.from.category} › ${v.from.section} → ${v.to.category} › ${v.to.section}`,
+        };
+      }),
       ...sc.added.map((v) => ({
         badge: 'New Section',
         cls: 'add',
         name: v.name,
-        href: `/${slugify(v.category)}/${slugify(v.name)}`,
+        href: `/${slugify(v.category)}/${slugify(v.name)}/`,
       })),
       ...sc.removed.map((v) => ({
         badge: 'Section Removed',
         cls: 'rem',
         name: v.name,
         href: '',
+      })),
+      ...sc.moved.map((v) => ({
+        badge: 'Section Renamed',
+        cls: 'mod',
+        name: `${v.from.section} → ${v.to.section}`,
+        href: `/${slugify(v.to.category)}/${slugify(v.to.section)}/`,
+        path:
+          v.from.category === v.to.category
+            ? `in ${v.to.category}`
+            : `from ${v.from.category} to ${v.to.category}`,
       })),
       ...ct.added.map((v) => ({
         badge: 'New Category',
@@ -190,41 +262,43 @@
     ];
   }
 
-  $: allItems = [
-    ...entries.map(
-      (e): TimelineItem => ({
+  const allItems = $derived(
+    [
+      ...entries.map((e): TimelineItem => ({
         kind: 'entry',
         date: e.date,
         sha: e.sha,
         pr: e.pr,
         data: e,
-      }),
-    ),
-    ...rejections.map(
-      (r): TimelineItem => ({
+      })),
+      ...rejections.map((r): TimelineItem => ({
         kind: 'rejection',
         date: r.date,
         sha: `rej-${r.pr.number}`,
         pr: r.pr,
         data: r,
-      }),
-    ),
-  ].sort((a, b) => b.date.localeCompare(a.date));
-
-  $: filtered = allItems.filter(
-    (item) => matchesFilters(item, on) && matchesSearch(item, searchQuery),
+      })),
+    ].sort((a, b) => b.date.localeCompare(a.date)),
   );
 
-  $: grouped = filtered.reduce<Record<string, TimelineItem[]>>((acc, item) => {
-    const d = new Date(item.date + 'T00:00:00Z');
-    const key = d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      timeZone: 'UTC',
-    });
-    (acc[key] ??= []).push(item);
-    return acc;
-  }, {});
+  const filtered = $derived(
+    allItems.filter(
+      (item) => matchesFilters(item, on) && matchesSearch(item, searchQuery),
+    ),
+  );
+
+  const grouped = $derived(
+    filtered.reduce<Record<string, TimelineItem[]>>((acc, item) => {
+      const d = new Date(item.date + 'T00:00:00Z');
+      const key = d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        timeZone: 'UTC',
+      });
+      (acc[key] ??= []).push(item);
+      return acc;
+    }, {}),
+  );
 
   function formatDate(dateStr: string): string {
     return new Date(dateStr + 'T00:00:00Z').toLocaleDateString('en-US', {
@@ -241,8 +315,9 @@
   <div class="controls-body">
     <input
       class="search"
-      type="text"
-      placeholder="Search..."
+      type="search"
+      aria-label="Filter changes by service, category or user"
+      placeholder="Filter by service, category, user.."
       bind:value={searchQuery}
     />
     <div class="filters">
@@ -250,7 +325,8 @@
         <button
           class="pill {f.key}"
           class:active={on[f.key]}
-          on:click={() => toggle(f.key)}
+          aria-pressed={on[f.key]}
+          onclick={() => toggle(f.key)}
         >
           <span class="icon">{f.icon}</span>{f.label}
         </button>
@@ -259,12 +335,16 @@
   </div>
 </details>
 
+<p class="sr-only" role="status">
+  Showing {filtered.length} of {allItems.length} entries
+</p>
+
 {#if filtered.length === 0}
   <p class="empty">No matching changes found.</p>
 {/if}
 
 {#each Object.entries(grouped) as [month, monthItems] (month)}
-  <h3 class="month-header">{month}</h3>
+  <h2 class="month-header">{month}</h2>
   {#each monthItems as item (item.sha)}
     <article class="entry">
       <time class="entry-date">{formatDate(item.date)}</time>
@@ -275,6 +355,8 @@
               href={`https://github.com/${item.pr.author}`}
               target="_blank"
               rel="noreferrer"
+              aria-hidden="true"
+              tabindex="-1"
             >
               <img
                 class="avatar"
@@ -323,31 +405,54 @@
               <span class="path">Not merged</span>
             </div>
           {:else}
-            {#each changeRows(item.data) as row (`${row.cls}/${row.path}/${row.name}`)}
-              <div class="change">
-                <span class="badge {row.cls}">{row.badge}</span>
-                {#if row.href}
-                  <a
-                    class="svc-name"
-                    class:removed={row.cls === 'rem'}
-                    href={row.href}>{row.name}</a
-                  >
-                {:else}
-                  <strong>{row.name}</strong>
-                {/if}
-                {#if row.fields}<span class="fields"
-                    >updated {row.fields.join(', ')}</span
-                  >{/if}
-                {#if row.path && !row.fields}<span class="path">{row.path}</span
-                  >{/if}
-              </div>
+            {@const rows = changeRows(item.data)}
+            {@const overflow = rows.length - MAX_VISIBLE_CHANGES}
+            {@const isOpen = !!expanded[item.sha]}
+            {#each rows.slice(0, MAX_VISIBLE_CHANGES) as row, i (i)}
+              {@render change(row)}
             {/each}
+            {#if overflow > 0}
+              <div
+                class="extra"
+                class:open={isOpen}
+                id={`changes-${item.sha}`}
+                inert={!isOpen}
+              >
+                <div>
+                  {#each rows.slice(MAX_VISIBLE_CHANGES) as row, i (i)}
+                    {@render change(row)}
+                  {/each}
+                </div>
+              </div>
+              <button
+                class="show-more"
+                aria-expanded={isOpen}
+                aria-controls={`changes-${item.sha}`}
+                onclick={() => toggleExpanded(item.sha)}
+              >
+                {isOpen ? 'Show less' : `+${overflow} more`}
+              </button>
+            {/if}
           {/if}
         </div>
       </div>
     </article>
   {/each}
 {/each}
+
+{#snippet change(row: ChangeRow)}
+  <div class="change">
+    <span class="badge {row.cls}">{row.badge}</span>
+    {#if row.href}
+      <a class="svc-name" href={row.href}>{row.name}</a>
+    {:else}
+      <strong>{row.name}</strong>
+    {/if}
+    {#if row.fields}<span class="fields">updated {row.fields.join(', ')}</span
+      >{/if}
+    {#if row.path && !row.fields}<span class="path">{row.path}</span>{/if}
+  </div>
+{/snippet}
 
 <style lang="scss">
   @use '../../styles/mixins' as *;
@@ -378,7 +483,7 @@
       border: var(--border-heavy);
       border-radius: var(--curve-lg);
       box-shadow: var(--shadow-xs);
-      background: var(--accent-fg);
+      background: var(--surface);
       color: var(--foreground);
       &:focus {
         outline: none;
@@ -400,6 +505,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-xs);
+      min-height: 24px;
       padding: 0.15rem var(--space-sm);
       border: 1px solid transparent;
       border-radius: var(--curve-md);
@@ -465,7 +571,7 @@
     margin: 1.5rem 0 var(--space-sm) 0;
     padding-bottom: 0.3rem;
     border-bottom: 1px solid var(--accent-3);
-    color: var(--accent-3);
+    color: var(--accent-3-text);
     font-family: var(--font-subtitle);
   }
 
@@ -473,7 +579,7 @@
     display: flex;
     gap: var(--space-md);
     padding: 0.6rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--background-hr-color);
     &:last-child {
       border-bottom: none;
     }
@@ -502,7 +608,7 @@
     .author a {
       color: var(--foreground);
       &:hover {
-        color: var(--accent);
+        color: var(--accent-text);
       }
     }
     .avatar {
@@ -512,7 +618,7 @@
       padding: 0 0.4rem;
       border-radius: var(--curve-sm);
       background: var(--accent-3);
-      color: var(--foreground);
+      color: var(--bright);
       text-decoration: none;
       font-family: var(--font-subtitle);
       &:hover {
@@ -533,6 +639,39 @@
     }
   }
 
+  .extra {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: var(--transition-normal);
+    &.open {
+      grid-template-rows: 1fr;
+    }
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      overflow: hidden;
+    }
+  }
+
+  .show-more {
+    align-self: flex-start;
+    min-height: 24px;
+    margin-top: 0.2rem;
+    padding: 0.1rem var(--space-sm);
+    border: 1px solid currentColor;
+    border-radius: var(--curve-md);
+    background: none;
+    color: var(--accent-3-text);
+    cursor: pointer;
+    font-family: var(--font-subtitle);
+    font-size: var(--text-xs);
+    transition: var(--transition-normal);
+    &:hover {
+      background: color-mix(in srgb, var(--accent-3) 15%, transparent);
+    }
+  }
+
   .badge {
     @include changelog-badge;
     &.add {
@@ -540,16 +679,16 @@
       color: var(--changelog-add);
     }
     &.rem {
-      background: color-mix(in srgb, var(--changelog-rem) 33%, transparent);
-      color: var(--changelog-rem);
+      background: color-mix(in srgb, var(--changelog-rej) 33%, transparent);
+      color: var(--changelog-rej);
     }
     &.mod {
       background: color-mix(in srgb, var(--changelog-mod) 33%, transparent);
       color: var(--changelog-mod);
     }
     &.rej {
-      background: color-mix(in srgb, var(--changelog-rej) 33%, transparent);
-      color: var(--changelog-rej);
+      background: color-mix(in srgb, var(--changelog-rem) 33%, transparent);
+      color: var(--changelog-rem);
     }
   }
 
@@ -559,7 +698,7 @@
     text-decoration: none;
   }
   a.svc-name:hover {
-    color: var(--accent);
+    color: var(--accent-text);
     text-decoration: underline;
   }
 

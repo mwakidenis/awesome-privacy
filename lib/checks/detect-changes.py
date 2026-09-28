@@ -4,9 +4,16 @@ Sets GitHub Actions output: yaml_changed.
 """
 
 import argparse
+import logging
 import os
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -33,13 +40,13 @@ def main():
 
     changed_files = [f for f in result.stdout.strip().splitlines() if f]
 
-    print("Changed files:")
+    logger.info("Detected %d changed file(s) since %s", len(changed_files), args.base_ref)
     for f in changed_files:
-        print(f"  {f}")
+        logger.debug("  %s", f)
 
     yaml_changed = YAML_FILE in changed_files
     write_github_output("yaml_changed", str(yaml_changed).lower())
-    print(f"yaml_changed={yaml_changed}")
+    logger.info("%s changed: %s", YAML_FILE, yaml_changed)
 
 
 if __name__ == "__main__":

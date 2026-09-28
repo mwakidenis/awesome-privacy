@@ -8,9 +8,12 @@ import type { Category } from '../types/Service';
 const categories: Category[] = (await fetchData())?.categories;
 ---
 
-<Layout title="Browse">
+<Layout
+	title="Browse Categories | Awesome Privacy"
+	description="Browse every category of privacy-respecting software, from browsers and VPNs to encrypted messaging, cloud storage and password managers."
+>
 	<div class="head-wrap">
-		<h2>Browse</h2>
+		<h1>Browse</h1>
 		<span>
 			<input
 				id="searchInput"
@@ -23,7 +26,7 @@ const categories: Category[] = (await fetchData())?.categories;
 		</span>
 	</div>
 	<p class="sitemap-link">
-		Not sure what you're looking for? Take a look through <a href="/all"
+		Not sure what you're looking for? Take a look through <a href="/all/"
 			>all listings</a
 		>
 	</p>
@@ -32,7 +35,11 @@ const categories: Category[] = (await fetchData())?.categories;
 		{
 			categories.map((category) => (
 				<li class="category">
-					<SectionList title={category.name} sections={category.sections} />
+					<SectionList
+						title={category.name}
+						sections={category.sections}
+						headingLevel={2}
+					/>
 				</li>
 			))
 		}
@@ -40,7 +47,7 @@ const categories: Category[] = (await fetchData())?.categories;
 
 	<div class="no-results">
 		<p class="zilch">Nothing found 😢</p>
-		<p>Try a <a href="/search">deep search</a> instead</p>
+		<p>Try a <a href="/search/">deep search</a> instead</p>
 	</div>
 </Layout>
 
@@ -100,7 +107,7 @@ const categories: Category[] = (await fetchData())?.categories;
 			searchInput.addEventListener('keydown', function (event) {
 				if (event.key === 'Enter') {
 					event.preventDefault();
-					window.location.href = `/search/${encodeURIComponent(searchInput.value.trim())}`;
+					window.location.href = `/search/${encodeURIComponent(searchInput.value.trim())}/`;
 				}
 				if (event.key === 'Escape') {
 					searchInput.value = '';
@@ -138,19 +145,19 @@ const categories: Category[] = (await fetchData())?.categories;
 			border-radius: var(--curve-sm);
 			font-size: var(--text-md);
 			box-shadow: var(--shadow-sm);
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			background: var(--background-form);
 			&:focus {
 				outline: none;
 				box-shadow: var(--shadow-sm-hover);
 			}
 		}
-		h2 {
+		h1 {
 			font-family: var(--font-subtitle);
 			font-weight: bold;
 			font-size: var(--text-4xl);
 			margin: 0;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 		}
 	}
 
@@ -158,7 +165,7 @@ const categories: Category[] = (await fetchData())?.categories;
 		margin: 0 auto;
 		width: 85vw;
 		a {
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 		}
 	}
 
@@ -169,7 +176,7 @@ const categories: Category[] = (await fetchData())?.categories;
 		display: none;
 		.zilch {
 			font-size: var(--text-3xl);
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			opacity: var(--opacity-dim);
 			font-weight: bold;
 		}
@@ -190,7 +197,7 @@ const categories: Category[] = (await fetchData())?.categories;
 			width: 95%;
 		}
 		.category {
-			background: var(--accent-fg);
+			background: var(--surface);
 			border: var(--border-heavy);
 			border-radius: var(--curve-sm);
 			box-shadow: var(--shadow-md);
@@ -217,7 +224,7 @@ const categories: Category[] = (await fetchData())?.categories;
 						color: var(--foreground);
 					}
 					.service-count {
-						color: var(--accent-3);
+						color: var(--accent-3-text);
 					}
 				}
 			}

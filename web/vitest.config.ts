@@ -8,9 +8,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@components': resolve(__dirname, 'src/components'),
-      '@layouts': resolve(__dirname, 'src/layouts'),
-      '@utils': resolve(__dirname, 'src/utils'),
+      '@components': resolve(import.meta.dirname, 'src/components'),
+      '@layouts': resolve(import.meta.dirname, 'src/layouts'),
+      '@utils': resolve(import.meta.dirname, 'src/utils'),
     },
   },
 });

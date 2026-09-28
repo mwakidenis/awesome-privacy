@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+coverage/
+src/generated/
+bun.lock
+*.md

@@ -152,6 +152,10 @@ components:
           properties:
             github:
               type: string
+            codeberg:
+              type: string
+            git:
+              type: string
             icon:
               type: string
             followWith:

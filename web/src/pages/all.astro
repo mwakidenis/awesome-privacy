@@ -44,22 +44,23 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 		</aside>
 
 		<main>
+			<h1 class="page-title">All Listings</h1>
 			{categories.map((category) => (
 				<Fragment>
 				<h2 id={slugify(category.name)}>
 					<FontAwesome iconName={slugify(category.name)} />
-					<a href={`/${slugify(category.name)}`}>{category.name}</a>
+					<a href={`/${slugify(category.name)}/`}>{category.name}</a>
 				</h2>
 				<article>
 					{category.sections.map((section: Section) => (
 						<Fragment>
 							<h3 id={`${slugify(category.name)}-${slugify(section.name)}`}>
-								<a href={`/${slugify(category.name)}/${slugify(section.name)}`}>
+								<a href={`/${slugify(category.name)}/${slugify(section.name)}/`}>
 									{section.name}
 								</a>
 							</h3>
 							<section class="grid">
-								{section.services.map((service: Service) => (
+								{[...section.services].sort((a, b) => a.name.localeCompare(b.name)).map((service: Service) => (
 									<ServiceCard
 										service={service}
 										sectionName={section.name}
@@ -73,7 +74,7 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 										<strong>This section is still a work in progress</strong><br />
 										Check back soon, or help us complete it by submitting a
 										<a href="https://github.com/lissy93/awesome-privacy">pull request</a>
-										or <a href="/submit">entry</a>.
+										or <a href="/submit/">entry</a>.
 									</p>
 								</div>
 							)}
@@ -164,7 +165,7 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 			width: 100%;
 			padding: var(--space-sm) var(--space-md);
 			background: var(--accent-3);
-			color: var(--accent-fg);
+			color: var(--accent-3-fg);
 			font-family: var(--font-subtitle);
 			font-size: var(--text-md);
 			font-weight: bold;
@@ -209,8 +210,8 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 				transition: var(--transition-fast);
 				display: block;
 				padding: var(--space-xs) 0;
-				&:hover { color: var(--accent); opacity: 1; }
-				&.active { color: var(--accent); opacity: 1; font-weight: bold; }
+				&:hover { color: var(--accent-text); opacity: 1; }
+				&.active { color: var(--accent-text); opacity: 1; font-weight: bold; }
 			}
 		}
 	}
@@ -230,11 +231,11 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 			justify-content: center;
 			align-items: center;
 			gap: var(--space-md);
-			a { color: var(--accent-3); text-decoration: none; }
+			a { color: var(--accent-3-text); text-decoration: none; }
 			:global(svg) {
 				width: var(--text-4xl);
 				height: var(--text-4xl);
-				color: var(--accent-3);
+				color: var(--accent-3-text);
 			}
 		}
 
@@ -260,7 +261,7 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 		}
 
 		.nothing-yet {
-			background: var(--accent-fg);
+			background: var(--surface);
 			border: var(--border-heavy);
 			box-shadow: var(--shadow-lg);
 			border-radius: var(--curve-sm);
@@ -270,7 +271,7 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 				font-style: italic;
 				text-align: center;
 				margin: var(--space-2xl) auto;
-				a { color: var(--accent); }
+				a { color: var(--accent-text); }
 			}
 		}
 	}
@@ -284,7 +285,7 @@ const categories = (await fetchData() as AwesomePrivacy)?.categories || [];
 			overflow: visible;
 			border: var(--border-heavy);
 			box-shadow: var(--shadow-lg);
-			background: var(--accent-fg);
+			background: var(--surface);
 			border-radius: var(--curve-sm);
 
 			.toc-toggle { display: block; }

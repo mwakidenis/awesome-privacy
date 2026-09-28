@@ -13,7 +13,28 @@ const changelog = await fetchChangelog();
 >
 	<div class="changelog-page">
 		<Main>
-			<h2>Changelog</h2>
+			<div class="changelog-head">
+				<h1>Changelog</h1>
+				<a
+					class="rss-link"
+					href="/rss.xml"
+					type="application/rss+xml"
+					title="Subscribe to the changelog RSS feed"
+				>
+					<svg
+						aria-hidden="true"
+						viewBox="0 0 24 24"
+						width="16"
+						height="16"
+						fill="currentColor"
+					>
+						<path
+							d="M4 11a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6v-3zm0-7a16 16 0 0 1 16 16h-3A13 13 0 0 0 4 7V4zm2.5 13a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"
+						></path>
+					</svg>
+					RSS feed
+				</a>
+			</div>
 			<p>
 				All data in awesome-privacy is managed via Git, so that we have a
 				complete and transparent changelog of exactly what was added when and by
@@ -36,9 +57,35 @@ const changelog = await fetchChangelog();
 </Layout>
 
 <style lang="scss">
-	h2 {
+	.changelog-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--space-md);
+		flex-wrap: wrap;
+	}
+	h1 {
+		font-family: var(--font-subtitle);
 		font-size: var(--text-3xl);
 		margin: 0;
+	}
+	.rss-link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-family: var(--font-subtitle);
+		font-size: var(--text-sm);
+		font-weight: bold;
+		text-decoration: none;
+		color: var(--accent-3-fg);
+		background: var(--accent-3);
+		border: var(--border-light);
+		box-shadow: var(--shadow-sm);
+		padding: var(--space-xs) var(--space-md);
+		transition: var(--transition-normal);
+		&:hover {
+			box-shadow: var(--shadow-sm-hover);
+		}
 	}
 	p {
 		font-size: var(--text-md);

@@ -29,7 +29,7 @@ const putCommaInNumber = (num: number | string | undefined) => {
   <div class="left">
     <h4>App Info</h4>
     <p class="website-title">
-      <img src={iosData.artworkUrl60} width="16" />
+      <img src={iosData.artworkUrl60} alt="" width="16" loading="lazy" />
       {iosData.trackName}
     </p>
     <p class="website-description">{iosData.description}</p>
@@ -116,7 +116,7 @@ const putCommaInNumber = (num: number | string | undefined) => {
       <ul class="screenshots">
         {iosData.screenshotUrls.map((url) => (
           <li>
-            <img src={url} width="100" />
+            <img src={url} alt="App screenshot" width="100" loading="lazy" />
           </li>
         ))}
       </ul>

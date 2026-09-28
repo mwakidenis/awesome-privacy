@@ -1,11 +1,12 @@
 ---
 import Button from '@components/form/Button.astro';
-import { parseMarkdown, formatLink } from '@utils/parse-markdown';
+import { parseMarkdown, formatLink, codebergUrl } from '@utils/parse-markdown';
 import type { Service } from 'src/types/Service';
 import FontAwesome from '@components/form/FontAwesome.svelte';
 import DeleteListing from '@components/things/DeleteListing.svelte';
 import ServiceIcon from '@components/things/ServiceIcon.astro';
 import { slugify } from '@utils/fetch-data';
+import { fetchServiceSources } from '@utils/fetch-line-numbers';
 
 import GitHubMetrics from '@components/things/ItemGitHubMetrics.astro';
 import SaveListing from '@components/things/SaveListing.svelte';
@@ -27,19 +28,25 @@ const {
 	sectionName,
 	categoryName,
 } = Astro.props;
+
+const sortedServices = [...(services || [])].sort((a, b) =>
+	a.name.localeCompare(b.name),
+);
+
+const sources = await fetchServiceSources(categoryName, sectionName);
 ---
 
 <section>
 	{
-		services && services.length > 0 ? (
+		sortedServices.length > 0 ? (
 			<ul>
-				{services.map((service: Service) => (
+				{sortedServices.map((service: Service) => (
 					<li id={slugify(service.name)}>
 						<DeleteListing
-							client:load
 							categoryName={categoryName}
 							sectionName={sectionName}
 							serviceName={service.name}
+							source={sources[service.name]}
 						/>
 						<div class="save-listing">
 							<SaveListing
@@ -58,9 +65,9 @@ const {
 
 							<a
 								class="service-title"
-								href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}`}
+								href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}/`}
 							>
-								{subHeading ? <h4>{service.name}</h4> : <h3>{service.name}</h3>}
+								{subHeading ? <h3>{service.name}</h3> : <h2>{service.name}</h2>}
 							</a>
 							{service.followWith && (
 								<p class="follow-with">({service.followWith})</p>
@@ -107,7 +114,8 @@ const {
 										</span>
 									)}
 									{service.openSource ||
-									(service.github && service.openSource !== false) ? (
+									((service.github || service.codeberg || service.git) &&
+										service.openSource !== false) ? (
 										<span
 											class="meta-item great"
 											title={`${service.name} is open source`}
@@ -131,10 +139,31 @@ const {
 											</a>
 										</span>
 									)}
+									{service.codeberg && (
+										<span
+											class="meta-item"
+											title={`View ${service.name} on Codeberg`}
+										>
+											<a href={codebergUrl(service.codeberg)} target="_blank">
+												<FontAwesome iconName="sourceCode" />{' '}
+												{formatLink(codebergUrl(service.codeberg))}
+											</a>
+										</span>
+									)}
+									{service.git && (
+										<span
+											class="meta-item"
+											title={`View ${service.name} source code`}
+										>
+											<a href={service.git} target="_blank">
+												<FontAwesome iconName="sourceCode" /> Source
+											</a>
+										</span>
+									)}
 								</div>
 								<div class="view-service">
 									<a
-										href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}`}
+										href={`/${slugify(categoryName)}/${slugify(sectionName)}/${slugify(service.name)}/`}
 									>
 										View {service.name} Report
 									</a>
@@ -154,7 +183,7 @@ const {
 				GitHub.
 				<br />
 				<span class="quick-submit">
-					Or submit an entry <a href="/submit">here</a>
+					Or submit an entry <a href="/submit/">here</a>
 				</span>
 			</p>
 		)
@@ -216,8 +245,8 @@ const {
 					text-decoration: none;
 					color: var(--foreground);
 					@include underline-hover(var(--accent-3));
-					h3,
-					h4 {
+					h2,
+					h3 {
 						margin: 0;
 						font-size: var(--text-xl);
 					}
@@ -228,7 +257,7 @@ const {
 					height: 2.5rem;
 					border-radius: var(--curve-sm);
 					overflow: hidden;
-					color: var(--accent);
+					color: var(--accent-text);
 				}
 				.follow-with {
 					opacity: var(--opacity-soft);
@@ -273,7 +302,7 @@ const {
 						right: var(--space-md);
 						font-size: var(--text-sm);
 						background: var(--accent-3);
-						color: var(--accent-fg);
+						color: var(--accent-3-fg);
 						text-decoration: none;
 						border-radius: var(--curve-md);
 					}
@@ -301,9 +330,9 @@ const {
 						display: flex;
 						gap: var(--space-xs);
 						&:hover {
-							color: var(--accent-3);
+							color: var(--accent-3-text);
 							:global(svg) {
-								color: var(--accent-3);
+								color: var(--accent-3-text);
 							}
 						}
 					}

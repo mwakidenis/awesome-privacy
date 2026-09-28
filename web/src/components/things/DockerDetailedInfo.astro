@@ -1,5 +1,5 @@
 ---
-import type { TemplateResponse } from '@utils/fetch-docker-instructions';
+import { dockerHubUrl, type TemplateResponse } from '@utils/fetch-docker-instructions';
 import { formatDate, timeAgo } from '@utils/dates-n-stuff'; 
 
 interface Props {
@@ -13,6 +13,10 @@ const formatBigNumber = (num: number): string => {
   return num.toLocaleString();
 };
 
+const { user, name } = docker.dockerHubData || {};
+const imageRef =
+  user && name ? `${user}/${name}` : docker.template?.image || null;
+const imageUrl = imageRef && dockerHubUrl(imageRef);
 ---
 
 <div class="docker-info-wrap">
@@ -21,7 +25,7 @@ const formatBigNumber = (num: number): string => {
     { docker.template && (
       <h4>Container Info</h4>
       <p class="dockerhub-title">
-        <img src={docker.template.logo} width="16" />
+        <img src={docker.template.logo} alt="" width="16" loading="lazy" />
         {docker.template.name}
       </p>
       <p class="dockerhub-description">{docker.template.description}</p>
@@ -54,24 +58,11 @@ const formatBigNumber = (num: number): string => {
       </ul>
     )}
 
-    {docker.dockerHubData && (
+    {imageUrl && (
       <h4>View on DockerHub</h4>
+      <a href={imageUrl} target="_blank" rel="noreferrer">{imageRef}</a>
     )}
-    
-    {docker.dockerHubData && Object.keys(docker.dockerHubData).length > 0 && (
-      <a href={`https://hub.docker.com/r/${docker.dockerHubData.user}/${docker.dockerHubData.name}`} target="_blank">
-        {docker.dockerHubData.user}/{docker.dockerHubData.name}  
-      </a>
-    )}
-    
-    {!docker.dockerHubData && docker.template &&
-      (
-        <a href={`https://hub.docker.com/r/${docker.template.image}`} target="_blank">
-          {docker.template.image}  
-        </a>
-      )
-    }
-    
+
   </div>
   <div class="right">
     {docker.usage && docker.usage.dockerRunCommand && (
@@ -110,11 +101,15 @@ const formatBigNumber = (num: number): string => {
 
     {docker.template && docker.template.volumes && (
       <h4>Volume Mounting</h4>
-      <ul class="table">
+      <ul class="table wide">
+        <li class="header">
+          <span class="lbl">Container Path</span>
+          <span class="val">Host Bind</span>
+        </li>
         {docker.template.volumes.map((volume) => (
           <li>
-            <span class="lbl">{volume.bind}</span>
-            <span class="val">{volume.container || '(any)'}</span>
+            <span class="lbl">{volume.container}</span>
+            <span class="val">{volume.bind || '(anonymous)'}</span>
           </li>
         ))}
       </ul>
@@ -123,10 +118,10 @@ const formatBigNumber = (num: number): string => {
     {docker.dockerHubData && docker.dockerHubData.permissions && (
       <h4>Permissions</h4>
       <ul class="table">
-        {Object.keys(docker.dockerHubData.permissions).map((perm) => (
+        {Object.entries(docker.dockerHubData.permissions).map(([perm, granted]) => (
           <li>
             <span class="lbl">{perm}</span>
-            <span class="val">{perm ? '✅ Yes' : '❎ No'}</span>
+            <span class="val">{granted ? '✅ Yes' : '❎ No'}</span>
           </li>
         ))}
       </ul>
@@ -166,6 +161,9 @@ const formatBigNumber = (num: number): string => {
   .table {
     max-width: 15rem;
     padding-left: 0;
+    &.wide {
+      max-width: none;
+    }
     li {
       display: flex;
       justify-content: space-between;

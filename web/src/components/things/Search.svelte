@@ -1,31 +1,37 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Fuse from 'fuse.js';
-  import { slugify } from '@utils/fetch-data';
-  import type { Category } from '../../types/Service';
   import { formatLink } from '@utils/parse-markdown';
-  import { prepareSearchItems, searchOptions } from '@utils/do-searchy-searchy';
+  import { runSearch } from '@utils/do-searchy-searchy';
   import type { SearchItem } from '@utils/do-searchy-searchy';
 
-  export let data: Category[];
-  export let previousSearch: string | undefined = undefined;
+  interface Props {
+    previousSearch?: string | undefined;
+  }
+  const { previousSearch = undefined }: Props = $props();
 
-  let fuse: Fuse<SearchItem>;
-  let searchQuery = '';
-  let results: SearchItem[];
+  let searchQuery = $state(previousSearch ?? '');
+  let results: SearchItem[] = $state([]);
+  let isTyping = $state(false);
 
-  // Initialize Fuse.js
-  onMount(() => {
-    const items = prepareSearchItems(data);
-    fuse = new Fuse(items, searchOptions);
-  });
-
-  const makeResultLink = (cat?: string, sec?: string, itm?: string) => {
-    if (!cat) return '/';
-    if (!sec) return `/${slugify(cat)}`;
-    if (!itm) return `/${slugify(cat)}/${slugify(sec)}`;
-    return `/${slugify(cat)}/${slugify(sec)}/${slugify(itm)}`;
+  // A section or category the query names is usually the intended destination,
+  // unless the query is exactly a service's name
+  const leadWithNamedGroup = (items: SearchItem[], query: string) => {
+    const q = query.trim().toLowerCase();
+    if (items.some((i) => i.type === 'Service' && i.name?.toLowerCase() === q))
+      return items;
+    const named = (i: SearchItem) =>
+      i.type !== 'Service' &&
+      ` ${i.sectionName ?? i.category}`.toLowerCase().includes(` ${q}`);
+    return [...items.filter(named), ...items.filter((i) => !named(i))];
   };
+
+  // Shares one index with the results island, so both rank identically
+  $effect(() => {
+    const query = searchQuery;
+    runSearch(query).then((found) => {
+      if (query === searchQuery)
+        results = leadWithNamedGroup(found, query).slice(0, 25);
+    });
+  });
 
   const makeResultText = (cat?: string, sec?: string, itm?: string) => {
     if (itm) return itm;
@@ -34,39 +40,45 @@
     return '';
   };
 
-  const makeLogoSrc = (logo: string, url: string) => {
+  const makeLogoSrc = (logo?: string, url?: string) => {
     if (!logo && !url) return '/broken-image.png';
-    return logo || `https://icon.horse/icon/${formatLink(url)}`;
+    return logo || `https://icon.horse/icon/${formatLink(url || '')}`;
   };
 
-  const makeTitle = (typ: string, desc: string) => {
+  const makeTitle = (typ?: string, desc?: string) => {
     if (desc && typ === 'Service') {
       return `${desc.slice(0, 60)}...`;
     }
     return '';
   };
 
+  let activeIndex = $state(-1);
+
   function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      activeIndex = (activeIndex + step + results.length) % results.length;
+      return;
+    }
     if (event.key === 'Enter') {
       event.preventDefault();
-      if (window) {
-        window.location.href = `/search/${encodeURIComponent(searchQuery)}`;
-      }
+      const active = results[activeIndex];
+      window.location.href = active
+        ? active.path
+        : `/search/${encodeURIComponent(searchQuery)}/`;
     }
     if (event.key === 'Escape') {
       searchQuery = '';
+      isTyping = false;
+      activeIndex = -1;
     }
   }
 
-  // Watch for changes in the search query and update results
-  $: if (searchQuery) {
-    results = fuse
-      .search(searchQuery)
-      .map((result) => result.item)
-      .splice(0, 25);
-  } else {
-    results = [];
-  }
+  $effect(() => {
+    searchQuery;
+    activeIndex = -1;
+  });
 </script>
 
 <div class="search-wrap">
@@ -78,23 +90,33 @@
   </label>
   <input
     id="search"
-    placeholder={previousSearch || 'Start typing...'}
+    placeholder="Start typing..."
     autocomplete="off"
+    role="combobox"
+    aria-expanded={isTyping && results.length > 0}
+    aria-controls="search-results"
+    aria-autocomplete="list"
+    aria-activedescendant={activeIndex >= 0
+      ? `search-result-${activeIndex}`
+      : undefined}
     bind:value={searchQuery}
-    on:keydown={handleKeyDown}
+    oninput={() => (isTyping = true)}
+    onkeydown={handleKeyDown}
   />
 
-  {#if searchQuery.length > 0}
+  {#if isTyping && results.length > 0}
     <div class="suggestions">
-      <ul>
-        {#each results as result (result.name + result.category + result.sectionName)}
-          <li class="result-row">
+      <ul id="search-results" role="listbox" aria-label="Search results">
+        {#each results as result, i (result.name + result.category + result.sectionName)}
+          <li
+            class="result-row"
+            class:active={i === activeIndex}
+            id={`search-result-${i}`}
+            role="option"
+            aria-selected={i === activeIndex}
+          >
             <a
-              href={makeResultLink(
-                result.category,
-                result.sectionName,
-                result.name,
-              )}
+              href={result.path}
               title={makeTitle(result.type, result.description)}
             >
               <span class="name">
@@ -181,8 +203,7 @@
         box-shadow: var(--shadow-sm);
         transform: translateY(-0.5rem);
         max-height: 500px;
-        overflow-y: scroll;
-        background: var(--background-form);
+        overflow-y: auto;
         li.result-row {
           padding: var(--space-sm) var(--space-md);
           margin: var(--space-sm) 0;
@@ -197,7 +218,7 @@
               align-items: center;
               gap: var(--space-sm);
               i {
-                color: var(--accent);
+                color: var(--accent-text);
                 font-weight: bold;
                 font-style: normal;
               }
@@ -205,8 +226,9 @@
                 border-radius: var(--curve-md);
                 width: 1.25rem;
                 height: 1.25rem;
+                object-fit: contain;
                 font-size: 10px;
-                color: var(--accent);
+                color: var(--accent-text);
                 overflow: hidden;
                 background: var(--accent-translucent);
                 padding: 1px;
@@ -217,9 +239,12 @@
               opacity: var(--opacity-soft);
             }
           }
-          &:hover {
+          &:hover,
+          &.active {
             background: var(--accent);
-            .name i {
+            a,
+            .name i,
+            .path {
               color: var(--accent-fg);
             }
           }

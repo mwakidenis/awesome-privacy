@@ -2,11 +2,7 @@
 import Layout from '@layouts/Layout.astro';
 import SavedServices from '@components/things/SavedServices.svelte';
 
-import { fetchData } from '@utils/fetch-data';
 import Button from '@components/form/Button.astro';
-import type { Category } from '../../types/Service';
-
-const categories = (await fetchData())?.categories || ([] as Category[]);
 
 export const prerender = false;
 
@@ -30,9 +26,9 @@ if (serviceList.error) {
 }
 ---
 
-<Layout title="Saved Services">
+<Layout title={`${makeTitle(inventoryId)} | Awesome Privacy`}>
 	<main>
-		<h2>{makeTitle(inventoryId)}</h2>
+		<h1>{makeTitle(inventoryId)}</h1>
 		{
 			cheekyLilError && (
 				<div class="error">
@@ -50,10 +46,10 @@ if (serviceList.error) {
 				</div>
 			)
 		}
-		<SavedServices allData={categories} serviceList={serviceList} client:load />
+		<SavedServices serviceList={serviceList} client:load />
 		<div class="buttons">
 			<p>Not found what you're looking for?</p>
-			<Button url="/all">Browse Services</Button>
+			<Button url="/all/">Browse Services</Button>
 		</div>
 	</main>
 </Layout>
@@ -69,12 +65,12 @@ if (serviceList.error) {
 		flex-direction: column;
 		min-height: calc(100vh - 12rem);
 		font-size: var(--text-md);
-		h2 {
+		h1 {
 			font-family: var(--font-subtitle);
 			font-weight: bold;
 			font-size: var(--text-4xl);
 			margin: 0;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 		}
 		.buttons {
 			margin: var(--space-md) auto;

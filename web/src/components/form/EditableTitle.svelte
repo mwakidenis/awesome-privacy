@@ -1,62 +1,63 @@
-<script>
-  import { onMount, tick } from 'svelte';
-  let title = 'Inventory'; // Default title
-  let editing = false;
+<script lang="ts">
+  import { onMount } from 'svelte';
 
-  // Function to save the title to local storage
-  function saveTitle(newTitle) {
-    localStorage.setItem('userTitle', newTitle);
-    title = newTitle;
+  let title = $state('Inventory');
+  let draft = $state('Inventory');
+  let editing = $state(false);
+  let inputEl: HTMLInputElement | undefined = $state();
+
+  onMount(() => {
+    const stored = localStorage.getItem('userTitle');
+    if (stored) {
+      title = stored;
+      draft = stored;
+    }
+  });
+
+  function startEditing() {
+    draft = title;
+    editing = true;
+    requestAnimationFrame(() => inputEl?.select());
+  }
+
+  function save() {
+    const trimmed = draft.trim() || title;
+    localStorage.setItem('userTitle', trimmed);
+    title = trimmed;
+    draft = trimmed;
     editing = false;
   }
 
-  onMount(async () => {
-    const storedTitle = localStorage.getItem('userTitle');
-    if (storedTitle) {
-      title = storedTitle;
-    }
-    await tick(); // Ensures Svelte has completed initial DOM updates
-  });
-
-  // Function to handle key events
-  function handleKeydown(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent form submission
-      saveTitle(event.target.innerText);
-      event.target.blur(); // Remove focus from the element
-    }
-    if (event.key === 'Escape') {
-      editing = false;
-      event.target.innerText = title; // Revert changes
-      event.target.blur(); // Remove focus from the element
-    }
+  function cancel() {
+    draft = title;
+    editing = false;
   }
 
-  // Click outside to stop editing
-  function handleClickOutside(event) {
-    if (editing) {
-      saveTitle(event.target.innerText);
-      editing = false;
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      save();
     }
+    if (event.key === 'Escape') cancel();
   }
 </script>
 
-<svelte:window on:click={handleClickOutside} />
-
-<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div>
-  <h2
-    contenteditable={true}
-    class:editable={editing}
-    on:click={() => (editing = true)}
-    on:keydown={handleKeydown}
-    on:blur={() => saveTitle(title)}
-    tabindex="0"
-  >
-    {title}
-  </h2>
-
-  <small>Click the title, to edit your inventory name</small>
+  {#if editing}
+    <input
+      bind:this={inputEl}
+      bind:value={draft}
+      class="title-input"
+      onkeydown={handleKeydown}
+      onblur={save}
+      aria-label="Inventory name"
+    />
+  {:else}
+    <button class="title-display" onclick={startEditing}>
+      <h2>{title}</h2>
+    </button>
+  {/if}
+  <small>Click the title to edit your inventory name</small>
 </div>
 
 <style>
@@ -65,17 +66,30 @@
     font-weight: bold;
     font-size: var(--text-4xl);
     margin: 0;
-    color: var(--accent-3);
+    color: var(--accent-3-text);
+  }
+  .title-display {
+    all: unset;
     cursor: pointer;
+    display: block;
+    padding: var(--space-xs);
     border-bottom: 2px solid transparent;
+    &:hover,
+    &:focus-visible {
+      border-bottom: 2px solid var(--accent-3);
+    }
+  }
+  .title-input {
+    font-family: var(--font-subtitle);
+    font-weight: bold;
+    font-size: var(--text-4xl);
+    color: var(--accent-3-text);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--accent-3);
     outline: none;
     padding: var(--space-xs);
-  }
-  .editable {
-    border-bottom: 2px solid var(--accent-3); /* Visual cue to show editable state */
-  }
-  h2:focus {
-    border-bottom: 2px solid var(--accent-3);
+    width: 100%;
   }
   small {
     font-size: var(--text-sm);

@@ -4,6 +4,7 @@ import ListingHero from '@components/things/ListingHero.astro';
 import ServiceList from '@components/things/ServiceList.astro';
 import Comments from '@components/things/Comments.svelte';
 import GitHubDetailedInfo from '@components/things/GitHubDetailedInfo.astro';
+import SecurityDetailedInfo from '@components/things/SecurityDetailedInfo.astro';
 import PrivacyPolicyDetails from '@components/things/PrivacyPolicyDetails.astro';
 import WebsiteDetailedInfo from '@components/things/WebsiteDetailedInfo.astro';
 import DockerDetailedInfo from '@components/things/DockerDetailedInfo.astro';
@@ -15,16 +16,22 @@ import SocialShare from '@components/form/Social.astro';
 import DataActions from '@components/things/DataActions.svelte';
 import type { AwesomePrivacy, Section, Service } from '../types/Service';
 import { fetchData, slugify } from '@utils/fetch-data';
+import { fetchServiceSources } from '@utils/fetch-line-numbers';
+import { codebergUrl } from '@utils/parse-markdown';
+import { plainText, truncate } from '@utils/meta-tags';
 import { fetchChangelog } from '@utils/fetch-changelog';
 import { fetchGitHubStats } from '@utils/fetch-repo-info';
+import { fetchSecurityReport } from '@utils/fetch-security-info';
 import { fetchTosdrPrivacy } from '@utils/fetch-privacy-policy';
 import { fetchWebsiteInfo } from '@utils/fetch-website-info';
 import { fetchDockerData } from '@utils/fetch-docker-instructions';
 import { fetchIosInfo } from '@utils/fetch-ios-info';
 import { fetchAndroidInfo } from '@utils/fetch-android-info';
+import { fetchPlexusInfo } from '@utils/fetch-plexus-info';
 import { fetchDiscordInfo } from '@utils/fetch-discord-info';
 import { fetchRedditInfo } from '@utils/fetch-reddit-info';
 import { site } from '@utils/config';
+import { apiBase, serviceSlug } from '@utils/api-config';
 import Button from '@components/form/Button.astro';
 
 interface Props extends Service {
@@ -35,8 +42,11 @@ interface Props extends Service {
 
 const {
 	name,
+	description,
 	url,
 	github,
+	codeberg,
+	git,
 	tosdrId,
 	discordInvite,
 	subreddit,
@@ -83,16 +93,14 @@ const makeBreadcrumbs = () => {
 	];
 };
 
+const plainDescription = plainText(description);
+
 const makeDescriptionTag = () => {
-	let desc = `Analysis of ${name}, and other privacy-respecting ${parentSection.name} `;
-	if (parentSection.services) {
-		desc += `Compare ${parentSection.services.map((s: Service) => s.name).join(' vs ')} more apps. `;
-	}
-	if (parentSection.alternativeTo && parentSection.alternativeTo.length > 0) {
-		desc += `The best secure encrypted alternatives to ${parentSection.alternativeTo.join(', ')}. `;
-	}
-	desc += 'All this, and many more free and awesome tools and software.';
-	return desc;
+	const summary = `${name}: ${plainDescription}`.replace(/([^.!?])$/, '$1.');
+	if (summary.length >= 120) return truncate(summary);
+	return truncate(
+		`${summary} Compare it with other private ${parentSection.name.toLowerCase()} on Awesome Privacy.`,
+	);
 };
 
 const filterServices = () => {
@@ -138,14 +146,22 @@ const { previous, next } = makePaginationLinks();
 const ignoredSites = ['github.com', 'wikipedia.'];
 
 const githubData = github ? await fetchGitHubStats(github) : null;
+const securityData = github ? await fetchSecurityReport(github) : null;
+const hasSecurityData =
+	!!securityData &&
+	((securityData.scorecard.available &&
+		securityData.scorecard.checks.length > 0) ||
+		securityData.advisories.count > 0);
 const privacyData = tosdrId ? await fetchTosdrPrivacy(tosdrId) : null;
 const iosData = iosApp ? await fetchIosInfo(iosApp) : null;
 const androidData = androidApp ? await fetchAndroidInfo(androidApp) : null;
+const plexusData = androidApp ? await fetchPlexusInfo(androidApp) : null;
 const discordData = discordInvite
 	? await fetchDiscordInfo(discordInvite)
 	: null;
 const redditData = subreddit ? await fetchRedditInfo(subreddit) : null;
 const dockerData = await fetchDockerData(name);
+const sources = await fetchServiceSources(categoryName, parentSection.name);
 const websiteData =
 	url && !ignoredSites.some((s) => url.includes(s))
 		? await fetchWebsiteInfo(url)
@@ -156,10 +172,19 @@ const serviceHistory = await fetchChangelog().then(({ entries }) => {
 		c.name === name &&
 		c.category === categoryName &&
 		c.section === parentSection.name;
+	const isHere = (m: {
+		name: string;
+		to: { category: string; section: string };
+	}) =>
+		m.name === name &&
+		m.to.category === categoryName &&
+		m.to.section === parentSection.name;
 	const results: Array<{
 		date: string;
-		type: 'added' | 'removed' | 'modified';
+		type: 'added' | 'removed' | 'modified' | 'moved' | 'renamed';
 		fields?: string[];
+		from?: { category: string; section: string };
+		previousName?: string;
 		pr?: import('@utils/fetch-changelog').ChangelogPr | null;
 	}> = [];
 	for (const e of entries) {
@@ -167,6 +192,8 @@ const serviceHistory = await fetchChangelog().then(({ entries }) => {
 		const added = (s?.added || []).find(isMatch);
 		const removed = (s?.removed || []).find(isMatch);
 		const modified = (s?.modified || []).find(isMatch);
+		const moved = (s?.moved || []).find(isHere);
+		const renamed = (s?.renamed || []).find(isHere);
 		if (added) results.push({ date: e.date, type: 'added', pr: e.pr });
 		else if (removed) results.push({ date: e.date, type: 'removed', pr: e.pr });
 		else if (modified)
@@ -176,6 +203,16 @@ const serviceHistory = await fetchChangelog().then(({ entries }) => {
 				fields: modified.fields,
 				pr: e.pr,
 			});
+		else if (renamed)
+			results.push({
+				date: e.date,
+				type: 'renamed',
+				previousName: renamed.previousName,
+				from: renamed.from,
+				pr: e.pr,
+			});
+		else if (moved)
+			results.push({ date: e.date, type: 'moved', from: moved.from, pr: e.pr });
 	}
 	return results;
 });
@@ -198,7 +235,32 @@ const catSlug = slugify(categoryName);
 const secSlug = slugify(parentSection.name);
 
 const getApiEndpoint = () => {
-	return `https://api.awesome-privacy.xyz/${catSlug}/${secSlug}/${slugify(name)}`;
+	return `${apiBase}/v1/services/${serviceSlug(name)}`;
+};
+
+const makeSoftwareSchema = () => {
+	const operatingSystem = [
+		iosApp && 'iOS',
+		androidApp && 'Android',
+		url && 'Web',
+	].filter(Boolean);
+	const codeRepository = github
+		? `https://github.com/${github}`
+		: codeberg
+			? codebergUrl(codeberg)
+			: git || null;
+	return {
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareApplication',
+		name,
+		description: plainDescription || makeDescriptionTag(),
+		url,
+		applicationCategory: parentSection.name,
+		...(operatingSystem.length && {
+			operatingSystem: operatingSystem.join(', '),
+		}),
+		...(codeRepository && { codeRepository }),
+	};
 };
 ---
 
@@ -207,6 +269,7 @@ const getApiEndpoint = () => {
 	keywords={makeKeyWordTag()}
 	description={makeDescriptionTag()}
 	breadcrumbs={makeBreadcrumbs()}
+	customSchemaJson={makeSoftwareSchema()}
 >
 	<main>
 		<ListingHero
@@ -216,9 +279,9 @@ const getApiEndpoint = () => {
 			privacyPolicyLink={privacyPolicyLink}
 		/>
 		{
-			privacyData && privacyData.parameters.points.length > 0 && (
+			privacyData && privacyData.parameters?.points?.length > 0 && (
 				<section>
-					<h3>{name} Privacy Policy</h3>
+					<h2>{name} Privacy Policy</h2>
 					<PrivacyPolicyDetails privacyData={privacyData} />
 				</section>
 			)
@@ -226,24 +289,35 @@ const getApiEndpoint = () => {
 		{
 			github && githubData && (
 				<section class="github-wrap">
-					<h3>{name} Source Code</h3>
+					<h2>{name} Source Code</h2>
 					<GitHubDetailedInfo gitHubData={githubData} repo={github} />
+				</section>
+			)
+		}
+		{
+			hasSecurityData && securityData && (
+				<section>
+					<h2>{name} Security</h2>
+					<SecurityDetailedInfo security={securityData} />
 				</section>
 			)
 		}
 		{
 			websiteData && (
 				<section>
-					<h3>{name} Website</h3>
+					<h2>{name} Website</h2>
 					<WebsiteDetailedInfo url={url} websiteInfo={websiteData} />
 				</section>
 			)
 		}
 		{
-			androidData && !androidData.error && (
+			((androidData && !androidData.error) || plexusData) && (
 				<section>
-					<h3>{name} Android App</h3>
-					<AndroidAppDetailedInfo androidData={androidData} />
+					<h2>{name} Android App</h2>
+					<AndroidAppDetailedInfo
+						androidData={androidData}
+						plexusData={plexusData}
+					/>
 				</section>
 			)
 		}
@@ -252,7 +326,7 @@ const getApiEndpoint = () => {
 				typeof iosData === 'object' &&
 				Object.keys(iosData).length > 0 && (
 					<section>
-						<h3>{name} iOS App</h3>
+						<h2>{name} iOS App</h2>
 						<IosAppDetailedInfo url={url} iosData={iosData} />
 					</section>
 				)
@@ -260,7 +334,7 @@ const getApiEndpoint = () => {
 		{
 			dockerData && dockerData.found && (
 				<section>
-					<h3>{name} Docker</h3>
+					<h2>{name} Docker</h2>
 					<DockerDetailedInfo docker={dockerData} />
 				</section>
 			)
@@ -268,7 +342,7 @@ const getApiEndpoint = () => {
 		{
 			(discordData || redditData) && (
 				<section>
-					<h3>{name} Socials</h3>
+					<h2>{name} Socials</h2>
 					<div class="social-wrap">
 						{discordData && <DiscordDetailedInfo discordData={discordData} />}
 						{redditData && <RedditDetailedInfo redditData={redditData} />}
@@ -278,31 +352,31 @@ const getApiEndpoint = () => {
 		}
 
 		<section>
-			<h3>{name} Reviews</h3>
+			<h2>{name} Reviews</h2>
 			<Comments client:visible />
 		</section>
 
 		<section>
-			<h3>More {parentSection.name}</h3>
+			<h2>More {parentSection.name}</h2>
 			<ServiceList
 				services={filterServices()}
 				subHeading={true}
 				noGitHubMetrics={true}
-				buttonLink={`/${catSlug}/${secSlug}`}
+				buttonLink={`/${catSlug}/${secSlug}/`}
 				categoryName={categoryName}
 				sectionName={parentSection.name}
 			/>
 		</section>
 		<section>
-			<h3>About the Data: {name}</h3>
+			<h2>About the Data: {name}</h2>
 			<DataActions
-				client:load
 				categoryName={categoryName}
 				sectionName={parentSection.name}
 				serviceName={name}
 				history={serviceHistory}
+				source={sources[name]}
 			/>
-			<h4>API</h4>
+			<h3>API</h3>
 			<p>
 				You can access {name}'s data programmatically via our API. Simply make a <code
 					>GET</code
@@ -311,20 +385,20 @@ const getApiEndpoint = () => {
 			<pre><a href={getApiEndpoint()}><code>{getApiEndpoint()}</code></a></pre>
 			<p>
 				The REST API is free, no-auth and CORS-enabled. To learn more, view the <a
-					href="/api">Swagger Docs</a
-				> or read the <a href="/about#api">API Usage Guide</a>.
+					href={`${apiBase}/docs`}>API Docs</a
+				> or read the <a href="/about/#api">API Usage Guide</a>.
 			</p>
 		</section>
 
 		<section>
-			<h3>Share {name}</h3>
+			<h2>Share {name}</h2>
 			<p>
 				Help your friends compare {parentSection.name}, and pick
 				privacy-respecting software and services.<br />
 				Share {name} and Awesome Privacy with your network!
 				<div>
 					<SocialShare
-						url={`${site}/${catSlug}/${secSlug}/${slugify(name)} `}
+						url={`${site}/${catSlug}/${secSlug}/${slugify(name)}/`}
 						title={`Checkout ${name}! \n`}
 						description={`Compare #${name} and other privacy-respecting ${parentSection.name} at ` +
 							`Awesome-Privacy.xyz, the free and open source list of private software alternatives. ` +
@@ -337,7 +411,7 @@ const getApiEndpoint = () => {
 		<div class="pagination-navigation">
 			{
 				previous ? (
-					<Button url={`/${catSlug}/${secSlug}/${slugify(previous)}`}>
+					<Button url={`/${catSlug}/${secSlug}/${slugify(previous)}/`}>
 						<span>← Previous</span>
 						<p>{previous}</p>
 					</Button>
@@ -345,12 +419,12 @@ const getApiEndpoint = () => {
 					<p class="nothing" />
 				)
 			}
-			<a href={`/${catSlug}/${secSlug}`} class="go-to-category">
+			<a href={`/${catSlug}/${secSlug}/`} class="go-to-category">
 				View {parentSection.name} ({(parentSection.services || []).length})
 			</a>
 			{
 				next && (
-					<Button url={`/${catSlug}/${secSlug}/${slugify(next)}`}>
+					<Button url={`/${catSlug}/${secSlug}/${slugify(next)}/`}>
 						<span>Next →</span>
 						<p>{next}</p>
 					</Button>
@@ -381,14 +455,14 @@ const getApiEndpoint = () => {
 		position: relative;
 		border: var(--border-heavy);
 		box-shadow: var(--shadow-lg);
-		background: var(--accent-fg);
+		background: var(--surface);
 	}
 
 	p {
 		margin: var(--space-xs) 0 var(--space-sm) 0;
 	}
 
-	h3 {
+	h2 {
 		font-size: var(--text-3xl);
 		margin: -2rem 0 var(--space-md) -2rem;
 		box-shadow: var(--shadow-lg);
@@ -401,7 +475,7 @@ const getApiEndpoint = () => {
 		}
 	}
 
-	h4 {
+	h3 {
 		font-size: var(--text-lg);
 		margin-bottom: 0;
 	}

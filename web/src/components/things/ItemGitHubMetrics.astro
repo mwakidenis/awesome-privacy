@@ -1,120 +1,102 @@
 ---
-import FontAwesome from "@components/form/FontAwesome.svelte";
-import { error } from "@utils/logger";
+import FontAwesome from '@components/form/FontAwesome.svelte';
+import { error } from '@utils/logger';
+import { safeFetch } from '@utils/safe-fetch';
+import { fetchGitHubStats } from '@utils/fetch-repo-info';
+
 const { github } = Astro.props;
 
-interface GitHubRepoData {
-  stargazers_count?: number;
-  forks_count?: number;
-  open_issues_count?: number;
-  language?: string;
-  license?: { spdx_id?: string; name?: string };
+interface RepoMetrics {
+  stars: number;
+  forks: number;
+  openIssues: number;
+  language: string;
+  licenseSpdx: string;
+  licenseName: string;
 }
 
-/**
- * For a given `user/repo` fetch repository stats from the GitHub API data
- * If API key is available through env var, use it to increase rate limit
- * Returns the response data and status code (200 == success)
- * @param repo
- */
-const fetchGitHubData = async (repo: string) => {
+const normalizeRepo = (repo: string) =>
+  repo.replace(/^https?:\/\/github\.com\//, '').replace(/\/+$/, '');
+
+// Fallback straight to the GitHub API when our API is unavailable.
+const fromGitHub = async (repo: string): Promise<RepoMetrics | null> => {
+  const headers: Record<string, string> = { 'User-Agent': 'awesome-privacy' };
   const apiKey = import.meta.env.GITHUB_API_KEY;
-  const headers = new Headers();
-  if (apiKey) {
-    headers.append("Authorization", `token ${apiKey}`);
-  }
-
-  let data: GitHubRepoData = {};
-  let statusCode;
-
-  const response = await fetch(`https://api.github.com/repos/${repo}`, {
-    headers: headers,
-  }).catch((e) => {
-    error('GitHub API', `Network error for ${repo}: ${e.message}`);
-    // Return a placeholder response to handle this gracefully
+  if (apiKey) headers['Authorization'] = `token ${apiKey}`;
+  try {
+    const res = await safeFetch(`https://api.github.com/repos/${repo}`, { headers });
+    if (!res.ok) {
+      error('GitHub API', `HTTP ${res.status} for ${repo}`);
+      return null;
+    }
+    const data = await res.json();
+    return {
+      stars: data.stargazers_count ?? 0,
+      forks: data.forks_count ?? 0,
+      openIssues: data.open_issues_count ?? 0,
+      language: data.language ?? '',
+      licenseSpdx: data.license?.spdx_id ?? '',
+      licenseName: data.license?.name ?? '',
+    };
+  } catch (e) {
+    error('GitHub API', `Network error for ${repo}: ${e}`);
     return null;
-  });
-
-  // Check if fetch was successful but caught by the catch block
-  if (!response) {
-    return { data, statusCode: 503 }; // Use an appropriate error status code
   }
-
-  statusCode = response.status;
-
-  // Only attempt to parse JSON if the response was OK
-  if (response.ok) {
-    data = await response.json();
-  } else {
-    error('GitHub API', `HTTP ${response.status} for ${repo}`);
-  }
-
-  return { data, statusCode };
 };
 
-
-/**
- * Given a license object, return SPDX ID, or a formatted name
- * @param license 
- */
-const formatLicense = (license?: { spdx_id?: string, name?: string }) => {
-  if (!license) {
-    return "Unknown";
+// Prefer our unified API, then fall back to the GitHub API directly.
+const getMetrics = async (repo: string): Promise<RepoMetrics | null> => {
+  const stats = await fetchGitHubStats(repo);
+  if (stats) {
+    const { info } = stats;
+    return {
+      stars: info.starCount,
+      forks: info.forksCount,
+      openIssues: info.openIssues,
+      language: info.language,
+      licenseSpdx: info.license,
+      licenseName: info.licenseName,
+    };
   }
-  if (license.spdx_id === "NOASSERTION") {
-    return "No License";
-  }
-  return license.spdx_id;
-}
+  return fromGitHub(normalizeRepo(repo));
+};
 
-/**
- * Given a (possibly large) number, return a formatted string
- * E.g. If greater than thousand, then return in k format
- * @param num 
- */
+const formatLicense = (spdx: string) => {
+  if (!spdx) return 'Unknown';
+  if (spdx === 'NOASSERTION') return 'No License';
+  return spdx;
+};
+
 const formatBigNumber = (num: number | undefined) => {
   if (num == null) return 0;
   if (num > 1000) {
     return `${(num / 1000).toFixed(1)}k`;
   }
   return num;
-}
+};
 
-// Initiate GitHub fetch, and make available to the component
-const stats = await fetchGitHubData(github);
-
-const {
-  stargazers_count, forks_count, open_issues_count, language, license,
-} = stats.data;
-
-
+const metrics = await getMetrics(github);
 ---
 
 <div class="github-metrics">
-  <!-- <span title={`Built / owned by @${user}`}>
-    <img src={`https://github.com/${user}.png`} alt={user || owner?.login} width="20" height="20" />
-  </span> -->
-  <!-- <span title={`${repo} is open source, with code published on GitHub`}>
-    <FontAwesome iconName="openSource" /> Open Source
-  </span> -->
   <span title={`GitHub repository:  ${github}`}>
     <a href={`https://github.com/${github}`} target="_blank"><FontAwesome iconName="github" /> {github}</a>
   </span>
-  { stats.statusCode === 200 && stats.data && (
-    <span title={`GitHub Star Count: ${stargazers_count}`}>
-      <FontAwesome iconName="stars" /> {formatBigNumber(stargazers_count)}
+  { metrics && (
+    <span title={`GitHub Star Count: ${metrics.stars}`}>
+      <FontAwesome iconName="stars" /> {formatBigNumber(metrics.stars)}
     </span>
-    <span title={`GitHub Fork Count: ${forks_count}`}>
-      <FontAwesome iconName="forks" /> {formatBigNumber(forks_count)}
+    <span title={`GitHub Fork Count: ${metrics.forks}`}>
+      <FontAwesome iconName="forks" /> {formatBigNumber(metrics.forks)}
     </span>
-    <span title={`Open Issues / Bugs: ${open_issues_count}`}>
-      <FontAwesome iconName="issues" /> {formatBigNumber(open_issues_count)}
+    <span title={`Open Issues / Bugs: ${metrics.openIssues}`}>
+      <FontAwesome iconName="issues" /> {formatBigNumber(metrics.openIssues)}
     </span>
-    <span title={`Code licensed under ${license?.name}`}>
-      <FontAwesome iconName="license" /> {formatLicense(license)}
+    <span title={`Code licensed under ${metrics.licenseName}`}>
+      <FontAwesome iconName="license" /> {formatLicense(metrics.licenseSpdx)}
     </span>
-    <span title={`Primary programming language ${language}`}>
-      <FontAwesome iconName="language" /> {language}
+    <span title={`Primary programming language ${metrics.language}`}>
+      <FontAwesome iconName="language" /> {metrics.language}
     </span>
   )}
 </div>
@@ -143,9 +125,9 @@ const {
       display: flex;
       gap: var(--space-xs);
       transition: var(--transition-normal);
-      color: var(--accent-3);
+      color: var(--accent-3-text);
       &:hover {
-        color: var(--accent-3);
+        color: var(--accent-3-text);
         text-decoration: underline;
       }
     }
@@ -155,7 +137,7 @@ const {
     }
   }
   :global(svg) {
-    color: var(--foregroung);
+    color: var(--foreground);
     width: var(--text-md);
     height: var(--text-md);
   }

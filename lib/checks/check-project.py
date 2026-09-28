@@ -7,14 +7,13 @@ import re
 import sys
 from datetime import datetime, timedelta, timezone
 
-import requests
 import yaml
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s [%(filename)s] %(message)s",
-    stream=sys.stderr,
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(PROJECT_ROOT, "awesome-privacy.yml")
@@ -23,20 +22,18 @@ FINDINGS_PATH = "/tmp/findings-project.json"
 
 TIMEOUT = 10
 USER_AGENT = "awesome-privacy-ci/1.0"
+# Reachable but blocking automated probes (bot-block/rate-limit), not a missing page.
+SOFT_HTTP = {401, 403, 405, 406, 429}
 MIN_STARS = 100
 INACTIVE_DAYS = 90
 MIN_AGE_DAYS = 120
-AI_COMMIT_RATIO = 0.2
-AI_BOT_AUTHORS = [
-    "noreply@anthropic.com",
-    "devin-ai-integration[bot]",
-    "copilot-swe-agent.github.com",
-    "noreply@cursor.com",
-]
+AI_COMMIT_RATIO = 0.8
 SPAM_AWESOME_THRESHOLD = 3
 SPAM_DISTINCT_REPO_THRESHOLD = 7
 SPAM_WINDOW_DAYS = 2
 NEW_ACCOUNT_DAYS = 14
+
+SESSION = utils.make_session(user_agent=USER_AGENT)
 
 LINK_MSG = (
     "The link(s) you included seem to be returning a 404."
@@ -95,6 +92,10 @@ DUPLICATE_URL_MSG = (
     "The URL for this submission already exists in another listing."
     " Please check that this is not a duplicate entry"
 )
+REPO_404_MSG = (
+    "The GitHub repository linked in this submission returns a 404."
+    " Please ensure the repo exists and is publicly accessible"
+)
 
 
 def load_diff(path):
@@ -107,71 +108,18 @@ def load_diff(path):
 
 
 def check_url(url):
-    """Return True if the URL is reachable, True on any error (no false positives)."""
-    try:
-        resp = requests.head(
-            url, timeout=TIMEOUT, allow_redirects=True,
-            headers={"User-Agent": USER_AGENT},
-        )
-        if resp.status_code >= 400:
-            resp = requests.get(
-                url, timeout=TIMEOUT, allow_redirects=True,
-                headers={"User-Agent": USER_AGENT}, stream=True,
-            )
-            resp.close()
-        if resp.status_code >= 400:
-            logging.warning("URL check failed for %s (HTTP %d)", url, resp.status_code)
-        return resp.status_code < 400
-    except Exception as exc:
-        logging.warning("URL check error for %s: %s", url, exc)
+    """Return True if reachable. Transport errors and bot-block/rate-limit statuses
+    (SOFT_HTTP) count as reachable; only a real bad status (404, 5xx, ...) fails."""
+    ok, status = utils.check_url(url, SESSION, TIMEOUT)
+    if ok or status is None or status in SOFT_HTTP:
         return True
-
-
-def parse_github_field(value):
-    """Parse a github field into (owner, repo), or (None, None) on failure."""
-    if not value:
-        return None, None
-    if value.startswith("https://github.com/"):
-        parts = value.removeprefix("https://github.com/").strip("/").split("/")
-        if len(parts) >= 2:
-            return parts[0], parts[1]
-        return None, None
-    if "/" in value:
-        parts = value.split("/")
-        if len(parts) == 2:
-            return parts[0], parts[1]
-    return None, None
+    logger.warning("URL check failed for %s (HTTP %d)", url, status)
+    return False
 
 
 def _gh_get(path, token, params=None, label=""):
     """GET a GitHub API endpoint. Returns parsed JSON on 200, None otherwise."""
-    headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": USER_AGENT}
-    if token:
-        headers["Authorization"] = f"token {token}"
-    try:
-        resp = requests.get(
-            f"https://api.github.com{path}",
-            headers=headers, timeout=TIMEOUT, params=params,
-        )
-        remaining = resp.headers.get("X-RateLimit-Remaining")
-        if remaining is not None:
-            try:
-                if int(remaining) < 100:
-                    logging.warning("[%s] GitHub rate limit low: %s/%s remaining",
-                                    label, remaining, resp.headers.get("X-RateLimit-Limit"))
-            except ValueError:
-                pass
-        if resp.status_code == 200:
-            return resp.json()
-        logging.warning("[%s] HTTP %d from %s", label, resp.status_code, path)
-    except Exception as exc:
-        logging.warning("[%s] request error for %s: %s", label, path, exc)
-    return None
-
-
-def fetch_repo(owner, repo, token):
-    """Fetch GitHub repo metadata, returning None on any error."""
-    return _gh_get(f"/repos/{owner}/{repo}", token, label="repos")
+    return utils.gh_get(path, token, session=SESSION, params=params, timeout=TIMEOUT, label=label)
 
 
 def load_yaml_data():
@@ -231,29 +179,14 @@ def check_links(diff, head):
     return None
 
 
-def _commit_has_bot(commit, bot_set):
-    """Check if a commit was authored or co-authored by a known AI bot."""
-    author = commit.get("commit", {}).get("author", {})
-    email = (author.get("email") or "").lower()
-    name = (author.get("name") or "").lower()
-    if email in bot_set or name in bot_set:
-        return True
-    message = (commit.get("commit", {}).get("message") or "").lower()
-    for line in message.splitlines():
-        if line.strip().startswith("co-authored-by:"):
-            if any(bot in line for bot in bot_set):
-                return True
-    return False
-
-
 def check_ai_commits(owner, repo, token):
     """Return AI_CODE_MSG if recent commits contain significant AI bot activity."""
     commits = _gh_get(f"/repos/{owner}/{repo}/commits", token,
                       params={"per_page": 100}, label="commits")
     if not commits:
         return None
-    bot_set = {a.lower() for a in AI_BOT_AUTHORS}
-    count = sum(1 for c in commits if _commit_has_bot(c, bot_set))
+    bot_set = {a.lower() for a in utils.AI_BOT_AUTHORS}
+    count = sum(1 for c in commits if utils.commit_has_bot(c, bot_set))
     if count / len(commits) >= AI_COMMIT_RATIO:
         return AI_CODE_MSG
     return None
@@ -271,8 +204,8 @@ def check_security_alerts(owner, repo, token):
 
 def check_spam_prs(pr_user, token):
     """Return list of spam findings based on recent PR activity."""
-    if not pr_user or not token:
-        logging.warning("check_spam_prs skipped: %s", "no PR_USER" if not pr_user else "no GITHUB_TOKEN")
+    if not pr_user:
+        logger.warning("check_spam_prs skipped: no PR_USER")
         return []
     try:
         since = (datetime.now(timezone.utc) - timedelta(days=SPAM_WINDOW_DAYS)).strftime("%Y-%m-%d")
@@ -282,7 +215,7 @@ def check_spam_prs(pr_user, token):
         if not data:
             return []
         items = data.get("items", [])
-        logging.info("check_spam_prs: %d total PRs for %s (fetched %d)",
+        logger.info("check_spam_prs: %d total PRs for %s (fetched %d)",
                      data.get("total_count", 0), pr_user, len(items))
         this_repo = os.environ.get("GITHUB_REPOSITORY", "Lissy93/awesome-privacy").lower()
         awesome_count = 0
@@ -297,7 +230,7 @@ def check_spam_prs(pr_user, token):
             repo_name = repo_url.rstrip("/").split("/")[-1].lower()
             if repo_name.startswith("awesome-"):
                 awesome_count += 1
-        logging.info("check_spam_prs: %d awesome-* PRs, %d distinct repos",
+        logger.info("check_spam_prs: %d awesome-* PRs, %d distinct repos",
                      awesome_count, len(distinct_repos))
         findings = []
         if awesome_count >= SPAM_AWESOME_THRESHOLD:
@@ -306,13 +239,13 @@ def check_spam_prs(pr_user, token):
             findings.append(SPAM_MANY_MSG)
         return findings
     except Exception as exc:
-        logging.warning("check_spam_prs error for %s: %s", pr_user, exc)
+        logger.warning("check_spam_prs error for %s: %s", pr_user, exc)
         return []
 
 
 def check_new_account(pr_user, token):
     """Return NEW_ACCOUNT_MSG if the PR author's GitHub account is very new."""
-    if not pr_user or not token:
+    if not pr_user:
         return None
     data = _gh_get(f"/users/{pr_user}", token, label="user")
     if not data:
@@ -361,20 +294,31 @@ def _pr_discloses_authorship(pr_body):
     return bool(pr_body and _DISCLOSURE_RE.search(pr_body))
 
 
+def check_repo_exists(diff, token):
+    """Return REPO_404_MSG if an added service's GitHub repo returns a 404."""
+    seen = set()
+    for svc in get_services(diff, "added"):
+        owner, repo = utils.parse_github_field(svc.get("fields", {}).get("github"))
+        if not owner or (owner, repo) in seen:
+            continue
+        seen.add((owner, repo))
+        if utils.repo_status(owner, repo, token, session=SESSION) == 404:
+            return {"msg": REPO_404_MSG, "level": "error"}
+    return None
+
+
 def check_repo_signals(diff, pr_user, token, pr_body=""):
     """Check GitHub repo author match, stars, and activity for added services."""
     findings = []
-    if not token:
-        return findings
     cache = {}
     for svc in get_services(diff, "added"):
         gh = svc.get("fields", {}).get("github")
-        owner, repo = parse_github_field(gh)
+        owner, repo = utils.parse_github_field(gh)
         if not owner:
             continue
         cache_key = f"{owner}/{repo}"
         if cache_key not in cache:
-            cache[cache_key] = fetch_repo(owner, repo, token)
+            cache[cache_key] = utils.fetch_repo(owner, repo, token, session=SESSION)
         data = cache[cache_key]
         if not data:
             continue
@@ -440,11 +384,12 @@ def main():
     try:
         pr_user = os.environ.get("PR_USER", "")
         token = os.environ.get("GITHUB_TOKEN", "")
-        logging.info("PR_USER=%s, GITHUB_TOKEN=%s", pr_user or "(empty)", "present" if token else "MISSING")
+        logger.info("Checking project health: links, spam, account age, duplicate URLs, repo signals")
+        logger.info("PR_USER=%s, GITHUB_TOKEN=%s", pr_user or "(empty)", "present" if token else "MISSING")
 
         diff = load_diff(DIFF_PATH)
         if not diff:
-            logging.info("No diff file at %s, nothing to check", DIFF_PATH)
+            logger.info("No diff file at %s, nothing to check", DIFF_PATH)
             with open(FINDINGS_PATH, "w") as f:
                 json.dump(findings, f)
             sys.exit(0)
@@ -466,11 +411,15 @@ def main():
         if finding:
             findings.append(finding)
 
+        finding = check_repo_exists(diff, token)
+        if finding:
+            findings.append(finding)
+
         findings.extend(check_repo_signals(diff, pr_user, token, pr_body))
     except Exception as exc:
-        logging.error("Unhandled error in main: %s", exc, exc_info=True)
+        logger.error("Unhandled error in main: %s", exc, exc_info=True)
 
-    logging.info("Writing %d finding(s) to %s", len(findings), FINDINGS_PATH)
+    logger.info("Project health: %d finding(s), writing to %s", len(findings), FINDINGS_PATH)
     with open(FINDINGS_PATH, "w") as f:
         json.dump(findings, f)
     sys.exit(0)

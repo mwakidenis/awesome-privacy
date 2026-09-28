@@ -9,6 +9,8 @@ export interface Service {
   description: string;
   url: string;
   github?: string;
+  codeberg?: string;
+  git?: string;
   icon?: string;
   links?: Array<{
     title: string;

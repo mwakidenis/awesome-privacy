@@ -1,13 +1,46 @@
-
 name = "awesome-privacy-api"
-compatibility_date = "2024-03-04"
-main = "src/index.ts"
+main = "src/index.workers.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
 
-rules = [
-  { type = "Text", globs = ["public/*.html"], fallthrough = true }
-]
+# Only reachable via the custom domain, not a *.workers.dev subdomain
+workers_dev = false
 
+# Readable stack traces in observability logs
+upload_source_maps = true
 
-[site]
-bucket = "./public"  # Path to your static files
+# Custom domain, auto-creates the DNS record on deploy
+[[routes]]
+pattern = "api.awesome-privacy.xyz"
+custom_domain = true
 
+# KV namespaces (populate via `wrangler kv namespace create ...` and paste IDs)
+[[kv_namespaces]]
+binding = "CACHE"
+id = "e0db6722ef6a42f6bb5f609e3ff88f20"
+
+# Rate limit binding (CF Rate Limit API)
+[[unsafe.bindings]]
+name = "RATE_LIMIT"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
+
+# Stricter limit for anonymous /enrich/* requests; a valid API_TOKEN bypasses it
+[[unsafe.bindings]]
+name = "ENRICH_RATE_LIMIT"
+type = "ratelimit"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+# Scheduled cache warmer
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+API_BASE = "https://api.awesome-privacy.xyz"
+
+# Allow observability
+[observability.logs]
+enabled = true
+invocation_logs = true

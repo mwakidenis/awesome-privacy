@@ -78,3 +78,6 @@ dist
 # wrangler project
 .dev.vars
 .wrangler
+
+# generated data
+src/generated

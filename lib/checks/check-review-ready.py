@@ -12,7 +12,15 @@ Writes:
 """
 
 import json
+import logging
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 WORK_DIR = "pr-meta"
 MAINTAINER = "Lissy93"
@@ -67,22 +75,28 @@ def write_action(action):
 
 
 def main():
+    logger.info("Checking whether the PR is ready for maintainer review")
     if already_notified():
+        logger.info("Maintainer already notified, action=skip")
         write_action("skip")
         return
 
     reviews = read_json("reviews.json")
     approvals = count_external_approvals(reviews)
+    logger.info("%d external approval(s), need %d", approvals, REQUIRED_APPROVALS)
 
     if approvals < REQUIRED_APPROVALS:
+        logger.info("Not enough approvals, action=skip")
         write_action("skip")
         return
 
     check_runs = read_json("check-runs.json")
     if not all_checks_passing(check_runs):
+        logger.info("Not all %d check run(s) passing, action=skip", len(check_runs))
         write_action("skip")
         return
 
+    logger.info("Approvals met and all checks passing, action=notify")
     write_action("notify")
 
 

@@ -74,14 +74,20 @@
     website: solidIcons.faGlobe,
     sourceCode: solidIcons.faCodeBranch,
     viewReport: solidIcons.faShieldHalved,
+    externalLink: solidIcons.faArrowUpRightFromSquare,
+
+    // Theme
+    themeDark: solidIcons.faMoon,
+    themeLight: solidIcons.faSun,
 
     //Misc
     ratingStar: solidIcons.faStar,
     saveListing: solidIcons.faBookmark,
     noTrackers: solidIcons.faShieldCheck,
+    warning: solidIcons.faTriangleExclamation,
   };
 
-  export let iconName: string;
+  let { iconName }: { iconName: string } = $props();
 </script>
 
 {#if iconMap[iconName]}

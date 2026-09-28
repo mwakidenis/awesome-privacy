@@ -6,7 +6,15 @@ interface LogEntry {
   message: string;
 }
 
-const entries: LogEntry[] = [];
+// Astro loads the config and the bundled page code as separate instances of
+// this module, so the entries have to live somewhere both of them can see
+const store = globalThis as typeof globalThis & { buildFetchLog?: LogEntry[] };
+const entries = (store.buildFetchLog ??= []);
+
+const MAX_SHOWN_PER_SOURCE = 5;
+
+const plural = (count: number, noun: string) =>
+  `${count} ${noun}${count === 1 ? '' : 's'}`;
 
 export const warn = (source: string, message: string) => {
   console.warn(`[${source}] ${message}`);
@@ -19,33 +27,29 @@ export const error = (source: string, message: string) => {
 };
 
 export const printSummary = () => {
-  if (entries.length === 0) return;
+  if (!entries.length) return;
 
-  const grouped: Record<
-    string,
-    { errors: number; warnings: number; messages: string[] }
-  > = {};
+  const grouped = new Map<string, LogEntry[]>();
   for (const entry of entries) {
-    if (!grouped[entry.source]) {
-      grouped[entry.source] = { errors: 0, warnings: 0, messages: [] };
-    }
-    const group = grouped[entry.source];
-    if (entry.level === 'error') group.errors++;
-    else group.warnings++;
-    group.messages.push(`  ${entry.level.toUpperCase()}: ${entry.message}`);
+    const group = grouped.get(entry.source);
+    if (group) group.push(entry);
+    else grouped.set(entry.source, [entry]);
   }
 
   console.log('\n───────────── Build fetch summary ──────────────');
-  for (const [source, { errors, warnings, messages }] of Object.entries(
-    grouped,
-  )) {
-    const parts = [];
-    if (errors) parts.push(`${errors} error${errors > 1 ? 's' : ''}`);
-    if (warnings) parts.push(`${warnings} warning${warnings > 1 ? 's' : ''}`);
-    console.log(`[${source}] ${parts.join(', ')}`);
-    for (const msg of messages) {
-      console.log(msg);
+  for (const [source, group] of grouped) {
+    const errors = group.filter((entry) => entry.level === 'error').length;
+    const warnings = group.length - errors;
+    const tally = [
+      ...(errors ? [plural(errors, 'error')] : []),
+      ...(warnings ? [plural(warnings, 'warning')] : []),
+    ];
+    console.log(`[${source}] ${tally.join(', ')}`);
+    for (const { level, message } of group.slice(0, MAX_SHOWN_PER_SOURCE)) {
+      console.log(`  ${level.toUpperCase()}: ${message}`);
     }
+    const hidden = group.length - MAX_SHOWN_PER_SOURCE;
+    if (hidden > 0) console.log(`  ...and ${hidden} more`);
   }
   console.log('────────────────────────────────────────────────\n');
 

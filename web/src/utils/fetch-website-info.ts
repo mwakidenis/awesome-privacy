@@ -1,21 +1,11 @@
-import { error } from './logger';
+import { fetchEnrich } from './fetch-enrich';
 
-export const fetchWebsiteInfo = async (
-  url: string,
-): Promise<WebsiteData | null> => {
-  const endpoint = `https://site-info-fetch.as93.workers.dev/?url=${url}`;
-  try {
-    const res = await fetch(endpoint);
-    if (!res.ok) {
-      error('Website', `HTTP ${res.status} for ${url} (${endpoint})`);
-      return null;
-    }
-    return await res.json();
-  } catch (err) {
-    error('Website', `Network error for ${url}: ${err}`);
-    return null;
-  }
-};
+export const fetchWebsiteInfo = (url: string): Promise<WebsiteData | null> =>
+  fetchEnrich<WebsiteData>(
+    'Website',
+    `/v1/enrich/website?url=${encodeURIComponent(url)}`,
+    url,
+  );
 
 interface DNSRecord {
   target: string;

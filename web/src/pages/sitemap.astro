@@ -6,9 +6,12 @@ import { fetchData, slugify } from '@utils/fetch-data';
 const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 ---
 
-<Layout title="All Links | Awesome Privacy">
+<Layout
+	title="All Links | Awesome Privacy"
+	description="A full index of every page on Awesome Privacy, covering all categories, sections and individual service listings."
+>
 	<main>
-		<h2>Sitemap</h2>
+		<h1>Sitemap</h1>
 		<p>
 			Below is a full listing of all pages on this site.<br />
 			<small
@@ -30,35 +33,35 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 				<a href="/">Home</a>
 			</li>
 			<li>
-				<a href="/search">Search</a>
+				<a href="/search/">Search</a>
 			</li>
 			<li>
-				<a href="/all">View All</a>
+				<a href="/all/">View All</a>
 			</li>
 			<li>
-				<a href="/changelog">Changelog</a>
+				<a href="/changelog/">Changelog</a>
 			</li>
 			<li>
-				<a href="/inventory">My Inventory</a>
+				<a href="/inventory/">My Inventory</a>
 			</li>
 			<li>
-				<a href="/submit">Submit Listing</a>
+				<a href="/submit/">Submit Listing</a>
 			</li>
 			<li>
-				<a href="/api">API</a>
+				<a href="/api/">API</a>
 			</li>
 			<li>
-				<a href="/browse">Categories</a>
+				<a href="/browse/">Categories</a>
 				<ul>
 					{
 						categories.map((category) => (
 							<li>
-								<a href={`/${slugify(category.name)}`}>{category.name}</a>
+								<a href={`/${slugify(category.name)}/`}>{category.name}</a>
 								<ul>
 									{category.sections.map((section) => (
 										<li>
 											<a
-												href={`/${slugify(category.name)}/${slugify(section.name)}`}
+												href={`/${slugify(category.name)}/${slugify(section.name)}/`}
 											>
 												{section.name}
 											</a>
@@ -66,7 +69,7 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 												{(section.services || []).map((service) => (
 													<li title={service.description || ''}>
 														<a
-															href={`/${slugify(category.name)}/${slugify(section.name)}/${slugify(service.name)}`}
+															href={`/${slugify(category.name)}/${slugify(section.name)}/${slugify(service.name)}/`}
 														>
 															{service.name}
 														</a>
@@ -82,24 +85,24 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 				</ul>
 			</li>
 			<li>
-				<a href="/about">About</a>
+				<a href="/about/">About</a>
 				<ul>
-					<li><a href="/about#objective">Objective</a></li>
-					<li><a href="/about#criteria">Listing Criteria</a></li>
-					<li><a href="/about#contributing">Contributing</a></li>
+					<li><a href="/about/#objective">Objective</a></li>
+					<li><a href="/about/#criteria">Listing Criteria</a></li>
+					<li><a href="/about/#contributing">Contributing</a></li>
 					<li>
-						<a href="/about#acknowledgements">Acknowledgements</a>
+						<a href="/about/#acknowledgements">Acknowledgements</a>
 						<ul>
-							<li><a href="/about#contributors">Contributors</a></li>
-							<li><a href="/about#sponsors">Sponsors</a></li>
+							<li><a href="/about/#contributors">Contributors</a></li>
+							<li><a href="/about/#sponsors">Sponsors</a></li>
 						</ul>
 					</li>
-					<li><a href="/about#author">Author</a></li>
-					<li><a href="/about#license">License</a></li>
+					<li><a href="/about/#author">Author</a></li>
+					<li><a href="/about/#license">License</a></li>
 				</ul>
 			</li>
 			<li>
-				<a href="/sitemap">Sitemap</a>
+				<a href="/sitemap/">Sitemap</a>
 			</li>
 		</ul>
 	</main>
@@ -130,7 +133,7 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 				case 'Enter':
 					event.preventDefault();
 					const searchTerm = encodeURIComponent(filterInput.value);
-					window.location.href = `/search/${searchTerm}`;
+					window.location.href = `/search/${searchTerm}/`;
 					break;
 				case 'Escape':
 					filterInput.value = '';
@@ -151,7 +154,7 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 		padding: 0 var(--space-lg);
 		border: var(--border-heavy);
 		box-shadow: var(--shadow-lg);
-		background: var(--accent-fg);
+		background: var(--surface);
 		position: relative;
 		p {
 			font-size: var(--text-lg);
@@ -168,8 +171,7 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 		ul {
 			padding-left: 1.2rem;
 			list-style: none;
-			border-left: 3px solid var(--transparent-accent);
-			border-radius: 4px;
+			border-left: 1px solid var(--surface-line);
 			li {
 				font-weight: 600;
 				ul li {
@@ -197,7 +199,8 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 		}
 	}
 
-	h2 {
+	h1 {
+		font-family: var(--font-subtitle);
 		font-size: var(--text-3xl);
 		margin: -2rem 0 var(--space-lg) -4rem;
 		box-shadow: var(--shadow-lg);
@@ -233,7 +236,7 @@ const categories = ((await fetchData()) as AwesomePrivacy)?.categories || [];
 			border-radius: var(--curve-sm);
 			font-size: var(--text-base);
 			box-shadow: var(--shadow-sm);
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			background: var(--background-form);
 			&:focus {
 				outline: none;

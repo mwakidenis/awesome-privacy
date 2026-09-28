@@ -86,25 +86,13 @@
 		url('/fonts/Lekton/Lekton-Bold.ttf') format('truetype');
 }
 
-html {
-	font-family: system-ui, sans-serif;
-}
-
 code {
-	font-family:
-		Menlo,
-		Monaco,
-		Lucida Console,
-		Liberation Mono,
-		DejaVu Sans Mono,
-		Bitstream Vera Sans Mono,
-		Courier New,
-		monospace;
+	font-family: var(--font-code);
 }
 
 .heading,
 h1 {
-	font-family: 'Libre Franklin', sans-serif;
+	font-family: var(--font-heading);
 	font-optical-sizing: auto;
 	font-weight: 800;
 	font-style: normal;
@@ -116,7 +104,7 @@ h3,
 h4,
 h5,
 h6 {
-	font-family: 'Lekton', sans-serif;
+	font-family: var(--font-subtitle);
 	font-weight: 700;
 	font-style: normal;
 }
@@ -132,9 +120,9 @@ blockquote,
 pre,
 strong,
 i {
-	font-family: 'Rubik', sans-serif;
+	font-family: var(--font-body);
 }
 
 a {
-	color: var(--accent);
+	color: var(--accent-text);
 }

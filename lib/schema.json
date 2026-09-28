@@ -32,6 +32,14 @@
                         "type": ["string", "null"],
                         "pattern": "^([a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+|https://github\\.com/.+)$"
                       },
+                      "codeberg": {
+                        "type": ["string", "null"],
+                        "pattern": "^([a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+|https://codeberg\\.org/.+)$"
+                      },
+                      "git": {
+                        "type": ["string", "null"],
+                        "pattern": "^https?://.+"
+                      },
                       "icon": {
                         "type": ["string", "null"],
                         "pattern": "^https?://.+"

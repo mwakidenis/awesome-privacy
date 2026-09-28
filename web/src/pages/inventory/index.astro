@@ -3,25 +3,24 @@ import Layout from '@layouts/Layout.astro';
 import SavedServices from '@components/things/SavedServices.svelte';
 import GetSharableLink from '@components/things/GetSharableLink.svelte';
 
-import { fetchData } from '@utils/fetch-data';
 import Button from '@components/form/Button.astro';
 import EditableTitle from '@components/form/EditableTitle.svelte';
-import type { Category } from '../../types/Service';
-
-const categories = (await fetchData())?.categories || ([] as Category[]);
 ---
 
-<Layout title="Saved Services">
+<Layout
+	title="Saved Services | Awesome Privacy"
+	description="Your personal shortlist of privacy-respecting apps and services, saved in your browser and sharable with a link."
+>
 	<main>
+		<h1 class="sr-only">Saved Services</h1>
 		<div class="top-row">
-			<!-- <h2>Inventory</h2> -->
 			<EditableTitle client:load />
 			<GetSharableLink client:load />
 		</div>
-		<SavedServices allData={categories} client:load />
+		<SavedServices client:load />
 		<div class="buttons">
 			<p>Not found what you're looking for?</p>
-			<Button url="/all">Browse Services</Button>
+			<Button url="/all/">Browse Services</Button>
 		</div>
 	</main>
 </Layout>
@@ -48,7 +47,7 @@ const categories = (await fetchData())?.categories || ([] as Category[]);
 			font-weight: bold;
 			font-size: var(--text-4xl);
 			margin: 0;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 		}
 		.buttons {
 			margin: var(--space-md) auto;

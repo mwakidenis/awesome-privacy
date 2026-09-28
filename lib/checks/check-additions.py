@@ -7,18 +7,21 @@ import sys
 
 import yaml
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s [%(filename)s] %(message)s",
-    stream=sys.stderr,
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(PROJECT_ROOT, "awesome-privacy.yml")
 DIFF_PATH = "/tmp/pr-diff.json"
 FINDINGS_PATH = "/tmp/findings-data.json"
+SCHEMA_ERRORS_PATH = "/tmp/schema-errors.json"
+MAX_SCHEMA_ERRORS_SHOWN = 10
 
 REQUIRED_FIELDS = ("name", "description", "url", "icon")
+REPO_FIELDS = ("github", "codeberg", "git")
 
 CONTRIBUTING = "https://github.com/Lissy93/awesome-privacy/blob/main/.github/CONTRIBUTING.md"
 
@@ -55,9 +58,14 @@ DESC_LENGTH_MSG = (
     f" character range. Please see our [Contributing Guidelines]({CONTRIBUTING}#description)"
 )
 OPENSOURCE_GITHUB_MSG = (
-    "You marked this service as open source but didn't include a `github` field."
-    " Please add the repository link"
+    "You marked this service as open source but didn't include a repository link."
+    " Please add a `github`, `codeberg` or `git` field"
 )
+
+
+def _has_repo(fields):
+    """Return True if a service has any source-repository field set."""
+    return any(fields.get(f) for f in REPO_FIELDS)
 
 
 def load_json(path):
@@ -138,7 +146,7 @@ def check_open_source(diff):
     """Return a finding if an added service has openSource missing or not true."""
     for svc in diff.get("services", {}).get("added", []):
         fields = svc.get("fields", {})
-        if fields.get("openSource") is not True and not fields.get("github"):
+        if fields.get("openSource") is not True and not _has_repo(fields):
             return OPENSOURCE_MSG
     return None
 
@@ -237,9 +245,32 @@ def check_opensource_github(diff):
     """Return a finding if an added service is open source but has no github field."""
     for svc in diff.get("services", {}).get("added", []):
         fields = svc.get("fields", {})
-        if fields.get("openSource") is True and not fields.get("github"):
+        if fields.get("openSource") is True and not _has_repo(fields):
             return OPENSOURCE_GITHUB_MSG
     return None
+
+
+def load_schema_errors():
+    """Load detailed schema/YAML errors written by validate-awesome-privacy.py, if any."""
+    try:
+        with open(SCHEMA_ERRORS_PATH) as f:
+            data = json.load(f)
+        return [str(x) for x in data] if isinstance(data, list) else []
+    except (OSError, ValueError):
+        return []
+
+
+def schema_findings():
+    """Return one error-level finding per detailed schema error, or the generic fallback."""
+    errors = load_schema_errors()
+    if not errors:
+        return [{"msg": SCHEMA_MSG, "level": "error"}]
+    shown = errors[:MAX_SCHEMA_ERRORS_SHOWN]
+    out = [{"msg": e, "level": "error"} for e in shown]
+    extra = len(errors) - len(shown)
+    if extra > 0:
+        out.append({"msg": f"…and {extra} more schema error(s)", "level": "error"})
+    return out
 
 
 def main():
@@ -247,51 +278,47 @@ def main():
     critical = False
     try:
         if os.environ.get("SCHEMA_OUTCOME") == "failure":
-            findings.append({"msg": SCHEMA_MSG, "level": "error"})
+            logger.warning("Schema validation failed upstream, surfacing schema errors")
+            findings.extend(schema_findings())
 
         diff = load_json(DIFF_PATH)
         head = load_yaml_data(DATA_PATH)
 
-        if diff:
-            finding = check_single_entry(diff)
-            if finding:
-                findings.append(finding)
-
-            finding = check_required_fields(diff, head)
-            if finding:
-                findings.append({"msg": finding, "level": "error"})
-                critical = True
-
-            finding = check_position(diff, head)
-            if finding:
-                findings.append(finding)
-
-            finding = check_open_source(diff)
-            if finding:
-                findings.append(finding)
+        if not diff:
+            logger.info("No diff at %s, nothing to validate", DIFF_PATH)
+        else:
+            added = diff.get("services", {}).get("added", [])
+            modified = diff.get("services", {}).get("modified", [])
+            logger.info("Validating additions: %d added, %d modified service(s)",
+                        len(added), len(modified))
 
             name_index = build_name_index(head, diff)
             url_index = build_url_index(head, diff)
 
-            finding = check_duplicate_name(diff, name_index)
-            if finding:
-                findings.append(finding)
-
-            finding = check_duplicate_url(diff, url_index)
-            if finding:
-                findings.append(finding)
-
-            finding = check_description_length(diff)
-            if finding:
-                findings.append(finding)
-
-            finding = check_opensource_github(diff)
-            if finding:
-                findings.append(finding)
+            checks = [
+                ("single-entry", check_single_entry(diff), False),
+                ("required-fields", check_required_fields(diff, head), True),
+                ("position", check_position(diff, head), False),
+                ("open-source", check_open_source(diff), False),
+                ("duplicate-name", check_duplicate_name(diff, name_index), False),
+                ("duplicate-url", check_duplicate_url(diff, url_index), False),
+                ("description-length", check_description_length(diff), False),
+                ("opensource-repo", check_opensource_github(diff), False),
+            ]
+            for name, finding, is_error in checks:
+                if not finding:
+                    continue
+                logger.info("flagged: %s", name)
+                if is_error:
+                    findings.append({"msg": finding, "level": "error"})
+                    critical = True
+                else:
+                    findings.append(finding)
     except Exception as exc:
-        logging.error("Unhandled error in main: %s", exc, exc_info=True)
+        logger.error("Unhandled error in main: %s", exc, exc_info=True)
 
-    logging.info("Writing %d finding(s) to %s", len(findings), FINDINGS_PATH)
+    logger.info("Additions check: %d finding(s)%s, writing to %s",
+                len(findings), " (critical)" if critical else "", FINDINGS_PATH)
     with open(FINDINGS_PATH, "w") as f:
         json.dump(findings, f)
     sys.exit(1 if critical else 0)

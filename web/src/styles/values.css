@@ -1,12 +1,27 @@
 html {
-	--accent: #f45397;
-	--accent-fg: #1e1f21;
+	--ink-dark: #1e1f21;
+	--ink-light: #fff;
 
+	--accent: #f45397;
 	--accent-2: #ffdf60;
 	--accent-3: #5f53f4;
 	--accent-4: #28dffd;
 
+	/* Legible ink for text sitting on each accent fill (theme-independent) */
+	--accent-fg: var(--ink-dark);
+	--accent-2-fg: var(--ink-dark);
+	--accent-3-fg: var(--ink-light);
+	--accent-4-fg: var(--ink-dark);
+
+	/* Accent tints legible as text on --background / --surface */
+	--accent-text: var(--accent);
+	--accent-3-text: #8b82f7;
+
+	--bright: #fff;
+
 	--foreground: #fff;
+	--foreground-muted: #b9b9c0;
+	--background-hr-color: #2f2f2f;
 
 	--curve-sm: 4px;
 	--curve-md: 6px;
@@ -26,6 +41,8 @@ html {
 	--bg-gradient-comp-1: #151517;
 	--bg-gradient-comp-2: #151517;
 	--background-form: #19191c;
+	--surface: #1e1f21;
+	--surface-line: #ffffff1f;
 
 	--box-outline: #000;
 
@@ -45,7 +62,7 @@ html {
 	--border-heavy: 2px solid var(--box-outline);
 	--border-light: 1px solid var(--box-outline);
 
-	--font-code: 'Courier New', Courier, monospace;
+	--font-code: Menlo, Monaco, 'Liberation Mono', 'Courier New', monospace;
 
 	--text-xs: 0.75rem;
 	--text-sm: 0.85rem;
@@ -65,7 +82,7 @@ html {
 	--space-xl: 3rem;
 	--space-2xl: 4rem;
 
-	--opacity-dim: 0.5;
+	--opacity-dim: 0.65;
 	--opacity-muted: 0.6;
 	--opacity-soft: 0.7;
 	--opacity-subtle: 0.8;
@@ -82,10 +99,10 @@ html {
 	--rating-c: #c7cc22;
 	--rating-d: #e1bb23;
 	--rating-e: #df8b1e;
-	--rating-f: #df541e;
-	--rating-g: #df1e1e;
+	--rating-f: #f2703a;
+	--rating-g: #f8524f;
 	--rating-neutral: #ecd40f;
-	--rating-unknown: grey;
+	--rating-unknown: #9a9aa2;
 
 	--changelog-add: #6fdd8b;
 	--changelog-rem: #fdcc0b;
@@ -93,11 +110,36 @@ html {
 	--changelog-rej: #ff2d55;
 
 	&[data-theme='light'] {
-		--accent-fg: #fff;
+		--accent-text: #c2185b;
+		--accent-3-text: #5346e8;
+
 		--foreground: #13151a;
+		--foreground-muted: #55565e;
 		--background: #f1ebf1;
 		--bg-gradient-comp-1: #feecff;
 		--bg-gradient-comp-2: #e1e4fb;
 		--background-form: #fff;
+		--surface: #fff;
+		--surface-line: #0000001f;
+		--background-hr-color: #ececec;
+
+		--success: #006e32;
+		--success-muted: #097a36;
+		--danger: #a80032;
+
+		--rating-a: #186636;
+		--rating-b: #3b6b1d;
+		--rating-c: #5f6211;
+		--rating-d: #6b590f;
+		--rating-e: #77490e;
+		--rating-f: #8c3211;
+		--rating-g: #991414;
+		--rating-neutral: #6b6007;
+		--rating-unknown: #54555b;
+
+		--changelog-rem: #7a6204;
+		--changelog-rej: #b81936;
+		--changelog-mod: #256f92;
+		--changelog-add: #33683f;
 	}
 }

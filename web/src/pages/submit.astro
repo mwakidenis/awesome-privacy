@@ -7,15 +7,21 @@ import { formatDate } from '@utils/dates-n-stuff';
 
 const commits = ((await fetchGitHubStats('lissy93/awesome-privacy')) || {})
 	.commits;
+
+const isDisabled = true; // will set this back to false if/when we have better way to manage the AI spam
 ---
 
-<Layout title="Awesome Privacy">
+<Layout
+	title="Submit a Change | Awesome Privacy"
+	description="Suggest a new service, correct an existing entry or propose a new category. All data is community maintained, openly, via Git."
+>
 	<section>
+		<h1 class="page-title">Submit a Change</h1>
 		<h2>About our Data</h2>
 		<p class="about-data">
 			All data on Awesome Privacy is community maintained via Git, this keeps
 			everything transparent, and means anyone can submit edits. You can learn
-			more about how our data is managed on our <a href="/about#our-data"
+			more about how our data is managed on our <a href="/about/#our-data"
 				>about page</a
 			>.
 			<br /><br />
@@ -35,7 +41,7 @@ const commits = ((await fetchGitHubStats('lissy93/awesome-privacy')) || {})
 	</section>
 	<section>
 		<h2>Submit an Addition</h2>
-		<AddNewService client:load />
+		<AddNewService client:load {isDisabled} />
 	</section>
 
 	<section>
@@ -74,7 +80,7 @@ const commits = ((await fetchGitHubStats('lissy93/awesome-privacy')) || {})
 				> guidelines before proceeding
 			</li>
 			<li>
-				All listing must meed our <a href="/about#creteria">Criteria</a> to be considered
+				All listing must meed our <a href="/about/#creteria">Criteria</a> to be considered
 				privacy-respecting
 			</li>
 			<li>Double check that your changes haven't already been proposed</li>
@@ -113,7 +119,7 @@ const commits = ((await fetchGitHubStats('lissy93/awesome-privacy')) || {})
 						<li title={commit.sha}>
 							{commit.message}
 							<br />
-							<img width="14" src={commit.authorAvatar} />
+							<img width="14" src={commit.authorAvatar} alt="" loading="lazy" />
 							<small>
 								By{' '}
 								<a href={`https://github.com/${commit.authorUsername}`}>
@@ -145,7 +151,7 @@ const commits = ((await fetchGitHubStats('lissy93/awesome-privacy')) || {})
 		padding: 0 var(--space-lg);
 		border: var(--border-heavy);
 		box-shadow: var(--shadow-lg);
-		background: var(--accent-fg);
+		background: var(--surface);
 		border-radius: var(--curve-sm);
 		@media (max-width: 768px) {
 			max-width: 95%;

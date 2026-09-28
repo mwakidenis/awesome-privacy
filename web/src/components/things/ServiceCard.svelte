@@ -2,24 +2,26 @@
   import FontAwesome from '@components/form/FontAwesome.svelte';
   import SaveListing from '@components/things/SaveListing.svelte';
   import { slugify } from '@utils/fetch-data';
-  import { formatLink } from '@utils/parse-markdown';
+  import { formatLink, codebergUrl } from '@utils/parse-markdown';
   import type { Service } from 'src/types/Service';
 
-  export let service: Service;
-  export let categoryName: string;
-  export let sectionName: string;
+  interface Props {
+    service: Service;
+    categoryName: string;
+    sectionName: string;
+  }
+  const { service, categoryName, sectionName }: Props = $props();
 
-  // Computed values based on props
-  let serviceRef = slugify(service.name);
-  let categorySlug = slugify(categoryName);
-  let sectionSlug = slugify(sectionName);
+  const serviceRef = $derived(slugify(service.name));
+  const categorySlug = $derived(slugify(categoryName));
+  const sectionSlug = $derived(slugify(sectionName));
 </script>
 
 <div class="service" id={serviceRef}>
   <div class="service-head">
     <a
       class="service-title"
-      href={`/${categorySlug}/${sectionSlug}/${serviceRef}`}
+      href={`/${categorySlug}/${sectionSlug}/${serviceRef}/`}
     >
       <h4>{service.name}</h4>
     </a>
@@ -68,7 +70,27 @@
         <FontAwesome iconName="sourceCode" /> GitHub
       </a>
     {/if}
-    <a href={`/${categorySlug}/${sectionSlug}/${serviceRef}`}>
+    {#if service.codeberg}
+      <a
+        class="link"
+        href={codebergUrl(service.codeberg)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <FontAwesome iconName="sourceCode" /> Codeberg
+      </a>
+    {/if}
+    {#if service.git}
+      <a
+        class="link"
+        href={service.git}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <FontAwesome iconName="sourceCode" /> Source
+      </a>
+    {/if}
+    <a href={`/${categorySlug}/${sectionSlug}/${serviceRef}/`}>
       <FontAwesome iconName="viewReport" /> View Report ➔
     </a>
   </div>

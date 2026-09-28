@@ -4,10 +4,17 @@ The generated section is between <!-- awesome-privacy-start --> and <!-- awesome
 """
 
 import argparse
+import logging
 import os
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 README_PATH = ".github/README.md"
@@ -17,11 +24,6 @@ README_ABS = os.path.join(PROJECT_ROOT, README_PATH)
 EXIT_PASS = 0
 EXIT_FAIL = 1
 EXIT_RUNTIME_ERROR = 2
-
-# ANSI color helpers
-_use_color = sys.stderr.isatty() and not os.environ.get("NO_COLOR")
-red = (lambda s: f"\033[31m{s}\033[0m") if _use_color else (lambda s: s)
-green = (lambda s: f"\033[32m{s}\033[0m") if _use_color else (lambda s: s)
 
 
 def get_changed_files(base_ref):
@@ -77,27 +79,30 @@ def main():
     parser.add_argument("--base-ref", required=True, help="Base git ref to diff against")
     args = parser.parse_args()
 
+    logger.info("Checking README for direct edits to the generated section")
+
     # Skip if README wasn't changed
     changed_files = get_changed_files(args.base_ref)
     if README_PATH not in changed_files:
-        print(green("README not modified, skipping."))
+        logger.info("README not modified, skipping")
         sys.exit(EXIT_PASS)
 
     # Find marker lines
     start_line, end_line = get_marker_lines()
     if start_line is None or end_line is None:
-        print("Could not find generated-section markers in README, skipping check.")
+        logger.warning("Generated-section markers not found in README, skipping check")
         sys.exit(EXIT_PASS)
 
     # Check if any changed lines fall within the generated section
     changed_lines = get_changed_line_numbers(args.base_ref)
+    logger.info("README edited (%d line(s)); generated section spans lines %d-%d",
+                len(changed_lines), start_line, end_line)
     for line_num in changed_lines:
         if start_line <= line_num <= end_line:
-            print(red("Direct edits to the generated section of the README are not allowed."), file=sys.stderr)
-            print(red("Edit awesome-privacy.yml instead and the README will be regenerated."), file=sys.stderr)
+            logger.error("Edit to generated section at line %d: edit awesome-privacy.yml instead", line_num)
             sys.exit(EXIT_FAIL)
 
-    print(green("README changes are outside the generated section, OK."))
+    logger.info("README edits are outside the generated section, OK")
     sys.exit(EXIT_PASS)
 
 

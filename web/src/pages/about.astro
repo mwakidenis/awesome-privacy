@@ -64,6 +64,7 @@ const licenseContent = async () => {
 <Layout title="About | Awesome Privacy" description={appDescription}>
 	<div class="about-page">
 		<Main>
+			<h1 class="page-title">About Awesome Privacy</h1>
 			<h2 id="objective">Objective</h2>
 			<p>
 				Large data-hungry corporations dominate the digital world but with
@@ -101,12 +102,22 @@ const licenseContent = async () => {
 				We welcome suggestions, additions, edits and removals to the list.<br />
 				It's thanks to contributors like you that this project is possible 💜
 				<br /><br />
-				To get started, head over to our <a
-					href="https://github.com/lissy93/awesome-privacy">GitHub repository</a
-				>. From here, you'll be able to edit <a href="#"
-					><code>awesome-privacy.yml</code></a
+				To get started, head over to our
+				<a href="https://github.com/lissy93/awesome-privacy"
+					>GitHub repository</a
+				>. From here, you'll be able to edit
+				<a
+					href="https://github.com/Lissy93/awesome-privacy/blob/main/awesome-privacy.yml"
 				>
+					<code>awesome-privacy.yml</code>
+				</a>
 				where all data is stored, and then submit your changes as a pull request.
+				Just be sure to read and follow the
+				<a
+					href="https://github.com/Lissy93/awesome-privacy?tab=contributing-ov-file"
+				>
+					Contributing Guidelines
+				</a> before submitting your pull request.
 				<br /><br />
 				If you're new to open source, you can find some resources to get you started
 				at <a href="https://git-in.to">git-in.to</a>, but feel free to reach out
@@ -127,7 +138,13 @@ const licenseContent = async () => {
 								target="_blank"
 								rel="noreferrer"
 							>
-								<img src={sponsor.avatarUrl} alt={sponsor.login} />
+								<img
+									src={sponsor.avatarUrl}
+									alt={sponsor.login || ''}
+									width="80"
+									height="80"
+									loading="lazy"
+								/>
 								<p>{sponsor.name || sponsor.login}</p>
 							</a>
 						))}
@@ -137,6 +154,7 @@ const licenseContent = async () => {
 						class="fallback-img"
 						src="https://readme-contribs.as93.net/sponsors/lissy93?perRow=12&shape=squircle&textColor=ffffff&limit=96"
 						alt="Sponsors"
+						loading="lazy"
 					/>
 				)
 			}
@@ -157,7 +175,13 @@ const licenseContent = async () => {
 								target="_blank"
 								rel="noreferrer"
 							>
-								<img src={contributor.avatar_url} alt={contributor.login} />
+								<img
+									src={contributor.avatar_url}
+									alt={contributor.login || ''}
+									width="80"
+									height="80"
+									loading="lazy"
+								/>
 								<p>{contributor.login}</p>
 							</a>
 						))}
@@ -167,6 +191,7 @@ const licenseContent = async () => {
 						class="fallback-img"
 						src="https://readme-contribs.as93.net/contributors/lissy93/awesome-privacy?perRow=12&shape=squircle&textColor=ffffff&limit=96"
 						alt="Contributors"
+						loading="lazy"
 					/>
 				)
 			}
@@ -226,6 +251,7 @@ const licenseContent = async () => {
 							height="240"
 							alt="Alicia Sykes"
 							src="https://cdn.as93.net/profile-pictures/dsc_0597"
+							loading="lazy"
 						/>
 					</a>
 					<div class="socials">
@@ -264,6 +290,7 @@ const licenseContent = async () => {
 										height="20"
 										alt={project.title}
 										src={project.icon}
+										loading="lazy"
 									/>
 									<a href={project.link} target="_blank" rel="noreferrer">
 										{project.title}
@@ -359,7 +386,7 @@ const licenseContent = async () => {
 			font-size: var(--text-sm);
 			opacity: var(--opacity-soft);
 			:global(a) {
-				color: var(--accent-3);
+				color: var(--accent-3-text);
 			}
 		}
 		:global(code) {
@@ -440,7 +467,7 @@ const licenseContent = async () => {
 			font-size: var(--text-lg);
 			font-style: italic;
 			font-weight: 300;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			text-align: center;
 			max-width: 550px;
 			margin: 0 auto;

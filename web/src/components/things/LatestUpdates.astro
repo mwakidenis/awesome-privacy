@@ -1,0 +1,176 @@
+---
+import { fetchChangelog } from '@utils/fetch-changelog';
+import { fetchData, slugify } from '@utils/fetch-data';
+import ServiceIcon from './ServiceIcon.astro';
+import type { Category, Service } from '../../types/Service';
+
+interface Props {
+	limit?: number;
+	categories?: Category[];
+}
+
+const { limit = 12, categories: categoriesProp } = Astro.props;
+
+const categories = categoriesProp ?? ((await fetchData())?.categories || []);
+const { entries } = await fetchChangelog();
+
+const findService = (
+	categoryName: string,
+	sectionName: string,
+	serviceName: string,
+): Service | undefined => {
+	const c = categories.find((cat) => cat.name === categoryName);
+	const s = c?.sections.find((sec) => sec.name === sectionName);
+	return s?.services?.find((sv) => sv.name === serviceName);
+};
+
+const additions = entries
+	.slice()
+	.sort((a, b) => (a.date < b.date ? 1 : -1))
+	.flatMap((e) =>
+		(e.changes?.services?.added || []).map((s) => ({
+			...s,
+			date: e.date,
+			author: e.pr?.author,
+			authorUrl: e.pr?.author ? `https://github.com/${e.pr.author}` : null,
+			service: findService(s.category, s.section, s.name),
+		})),
+	)
+	.slice(0, limit);
+
+const formatDate = (iso: string) =>
+	new Date(iso).toLocaleDateString('en-GB', {
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+	});
+---
+
+<div class="latest-updates">
+	{
+		additions.length > 0 ? (
+			<>
+				<p class="intro">
+					Newest privacy-respecting software and services added to the
+					directory.
+				</p>
+				<ul>
+					{additions.map((a) => (
+						<li>
+							<a
+								class="service-link"
+								href={`/${slugify(a.category)}/${slugify(a.section)}/${slugify(a.name)}/`}
+							>
+								{a.service && (
+									<ServiceIcon
+										name={a.name}
+										url={a.service.url}
+										icon={a.service.icon}
+										size={32}
+									/>
+								)}
+								<span class="name">{a.name}</span>
+							</a>
+							<p
+								class="meta"
+								title={`In ${a.category}${a.author ? ` submitted by @${a.author}` : ''} on ${formatDate(a.date)}`}
+							>
+								In{' '}
+								<a class="inline" href={`/${slugify(a.category)}/`}>
+									{a.category}
+								</a>
+								{a.author && (
+									<>
+										{' '}
+										submitted by{' '}
+										<a
+											class="inline"
+											href={a.authorUrl!}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											@{a.author}
+										</a>
+									</>
+								)}{' '}
+								on <time datetime={a.date}>{formatDate(a.date)}</time>
+							</p>
+						</li>
+					))}
+				</ul>
+				<div class="footer">
+					<a class="small-button" href="/changelog/">
+						View full changelog &rarr;
+					</a>
+				</div>
+			</>
+		) : (
+			<p class="intro">No recent updates to show.</p>
+		)
+	}
+</div>
+
+<style lang="scss">
+	.latest-updates {
+		background: var(--surface);
+		border: var(--border-heavy);
+		border-radius: var(--curve-sm);
+		box-shadow: var(--shadow-md);
+		padding: var(--space-md);
+		width: 100%;
+		box-sizing: border-box;
+		margin: 0 auto;
+		.intro {
+			margin: 0 0 var(--space-sm) 0;
+		}
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: var(--space-sm) var(--space-md);
+			li {
+				display: flex;
+				flex-direction: column;
+				min-width: 0;
+				padding: var(--space-xs) 0;
+				.service-link {
+					display: flex;
+					align-items: center;
+					gap: var(--space-sm);
+					text-decoration: none;
+					color: var(--foreground);
+					min-width: 0;
+					&:hover .name {
+						color: var(--accent-text);
+					}
+					.name {
+						font-weight: bold;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						white-space: nowrap;
+					}
+				}
+				.meta {
+					font-size: var(--text-sm);
+					opacity: var(--opacity-muted);
+					margin: 2px 0 0 0;
+					max-width: 100%;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					a.inline {
+						color: inherit;
+						text-decoration: underline;
+					}
+				}
+			}
+		}
+		.footer {
+			display: flex;
+			justify-content: flex-end;
+			margin-top: var(--space-md);
+		}
+	}
+</style>

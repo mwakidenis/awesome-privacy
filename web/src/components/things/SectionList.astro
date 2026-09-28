@@ -8,21 +8,23 @@ interface Props {
 	title: string;
 	sections: Section[];
 	bigTitle?: boolean;
+	headingLevel?: 2 | 3;
 }
 
-const { title, sections, bigTitle } = Astro.props;
+const { title, sections, bigTitle, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
 ---
 
 <div class="wrap">
 	{
 		bigTitle ? (
-			<h2>
+			<h1>
 				<FontAwesome iconName={slugify(title)} />
 				{title}{' '}
-			</h2>
+			</h1>
 		) : (
-			<a class="category-title" href={`/${slugify(title)}`}>
-				<h3>{title}</h3>
+			<a class="category-title" href={`/${slugify(title)}/`}>
+				<Heading>{title}</Heading>
 			</a>
 		)
 	}
@@ -39,7 +41,7 @@ const { title, sections, bigTitle } = Astro.props;
 		{
 			sections.map((section) => (
 				<li class="section">
-					<a href={`/${slugify(title)}/${slugify(section.name)}`}>
+					<a href={`/${slugify(title)}/${slugify(section.name)}/`}>
 						<span>{section.name}</span>
 						<span class="service-count">
 							({section.services ? section.services.length : 0})
@@ -63,7 +65,7 @@ const { title, sections, bigTitle } = Astro.props;
 		}
 	}
 
-	h2 {
+	h1 {
 		font-family: var(--font-subtitle);
 		font-size: var(--text-3xl);
 		margin: -2rem 0 var(--space-lg) -2rem;
@@ -88,6 +90,7 @@ const { title, sections, bigTitle } = Astro.props;
 		color: var(--foreground);
 		z-index: 2;
 		position: relative;
+		h2,
 		h3 {
 			font-family: var(--font-subtitle);
 			font-weight: bold;
@@ -104,12 +107,16 @@ const { title, sections, bigTitle } = Astro.props;
 			margin: var(--space-sm) 0;
 			font-size: var(--text-md);
 			a {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--space-xs);
+				min-height: 24px;
 				text-decoration: none;
 				color: var(--foreground);
 				@include underline-hover(var(--accent-3), 2px, 80%, 0.15s);
 			}
 			.service-count {
-				color: var(--accent-3);
+				color: var(--accent-3-text);
 			}
 		}
 	}
@@ -123,8 +130,7 @@ const { title, sections, bigTitle } = Astro.props;
 			width: 2rem;
 			height: 2rem;
 			opacity: var(--opacity-dim);
-			text-shadow: 3px 3px 0 black;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			transition: var(--transition-normal);
 		}
 	}

@@ -1,9 +1,9 @@
 ---
-const { text, url, className, title } = Astro.props;
+const { text, url, className, title, target, rel } = Astro.props;
 ---
 
 <div class={`button ${className || ''}`} title={title}>
-	<a href={url}>{text}<slot /></a>
+	<a href={url} target={target} rel={rel}>{text}<slot /></a>
 </div>
 
 <style lang="scss">

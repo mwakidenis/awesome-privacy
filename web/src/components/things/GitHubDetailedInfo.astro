@@ -1,6 +1,6 @@
 ---
 import type { GitHubStatsResponse } from '@utils/fetch-repo-info'
-import { formatDate, timeAgo } from '@utils/dates-n-stuff'; 
+import { formatDate, timeAgo } from '@utils/dates-n-stuff';
 
 import FontAwesome from "@components/form/FontAwesome.svelte"
 
@@ -14,46 +14,46 @@ const { gitHubData, repo } = Astro.props;
 
 function generateChartData(languages: Record<string, number>): string {
   const colorMap: { [key: string]: string } = {
-    'TypeScript': '#2b7489', 
-    'Objective-C++': '#6866fb', 
-    'Jupyter Notebook': '#DA5B0B', 
-    'Dart': '#00B4AB', 
-    'Shell': '#89e051',  
-    'Elixir': '#6e4a7e', 
-    'Kotlin': '#7F52FF', 
-    'Objective-C': '#438eff', 
-    'Ruby': '#CC342D', 
-    'Go': '#00ADD8', 
-    'PHP': '#4F5D95', 
-    'Java': '#b07219', 
-    'Scala': '#DC322F', 
-    'Makefile': '#427819', 
-    'Perl': '#39457E', 
-    'Lua': '#2C2D72', 
-    'Vue': '#4FC08D', 
-    'HTML': '#E34F26', 
-    'Swift': '#F05138', 
+    'TypeScript': '#2b7489',
+    'Objective-C++': '#6866fb',
+    'Jupyter Notebook': '#DA5B0B',
+    'Dart': '#00B4AB',
+    'Shell': '#89e051',
+    'Elixir': '#6e4a7e',
+    'Kotlin': '#7F52FF',
+    'Objective-C': '#438eff',
+    'Ruby': '#CC342D',
+    'Go': '#00ADD8',
+    'PHP': '#4F5D95',
+    'Java': '#b07219',
+    'Scala': '#DC322F',
+    'Makefile': '#427819',
+    'Perl': '#39457E',
+    'Lua': '#2C2D72',
+    'Vue': '#4FC08D',
+    'HTML': '#E34F26',
+    'Swift': '#F05138',
     'C': '#A8B9CC',
     'C#': '#097c01',
-    'Clojure': '#db5855', 
-    'Rust': '#dea584', 
-    'Assembly': '#6E4C13', 
-    'Arduino': '#bd79d1', 
-    'C Sharp': '#512BD4', 
-    'CSS': '#563d7c', 
-    'TeX': '#3D6117', 
-    'OCaml': '#3be133', 
-    'Pascal': '#b0ce4e', 
-    'F#': '#b845fc', 
-    'JavaScript': '#f1e05a', 
-    'VimL': '#199f4b', 
-    'R': '#198ce7', 
-    'Erlang': '#B83998', 
-    'Scheme': '#1e4aec', 
-    'Python': '#3572A5', 
-    'Common Lisp': '#3fb68b', 
-    'Groovy': '#e69f56', 
-    'Julia': '#a270ba', 
+    'Clojure': '#db5855',
+    'Rust': '#dea584',
+    'Assembly': '#6E4C13',
+    'Arduino': '#bd79d1',
+    'C Sharp': '#512BD4',
+    'CSS': '#563d7c',
+    'TeX': '#3D6117',
+    'OCaml': '#3be133',
+    'Pascal': '#b0ce4e',
+    'F#': '#b845fc',
+    'JavaScript': '#f1e05a',
+    'VimL': '#199f4b',
+    'R': '#198ce7',
+    'Erlang': '#B83998',
+    'Scheme': '#1e4aec',
+    'Python': '#3572A5',
+    'Common Lisp': '#3fb68b',
+    'Groovy': '#e69f56',
+    'Julia': '#a270ba',
     'cpp': '#00599C',
     'C++': '#00599C',
     'Dockerfile': '#2496ED',
@@ -64,7 +64,7 @@ function generateChartData(languages: Record<string, number>): string {
   const data: number[] = [];
   const labels: string[] = [];
   const colors: string[] = [];
-  
+
   // Default colors to use if the language is not in the colorMap
   const defaultColors = ['#ffdf60', '#5f53f4', '#28dffd', '#f45397'];
   let defaultColorIndex = 0;
@@ -73,7 +73,7 @@ function generateChartData(languages: Record<string, number>): string {
   for (const [language, lines] of Object.entries(languages)) {
     data.push(lines);
     labels.push(language);
-    
+
     // Assign a color from the colorMap if available; otherwise, use a default color
     if (colorMap[language]) {
       colors.push(colorMap[language]);
@@ -119,8 +119,21 @@ const formatBigNumber = (num: number): string => {
   return num.toLocaleString();
 };
 
+const formatLicense = (spdx: string): string => {
+  if (!spdx) return 'Unknown';
+  return spdx === 'NOASSERTION' ? 'Other' : spdx;
+};
 
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const isInactive =
+  Date.now() - new Date(gitHubData.info.pushedAt).getTime() > YEAR_MS;
 
+const badges: { label: string; alert?: boolean }[] = [];
+if (gitHubData.info.isArchived) badges.push({ label: 'Archived', alert: true });
+if (isInactive) badges.push({ label: 'Inactive', alert: true });
+if (gitHubData.info.isFork && gitHubData.info.forkParent)
+  badges.push({ label: `Fork of ${gitHubData.info.forkParent}` });
+if (!gitHubData.info.license) badges.push({ label: 'No license' });
 
 const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubData.languages)}`;
 
@@ -132,7 +145,7 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
   <div class="left">
     <h4>Author</h4>
     <p>
-      <img src={gitHubData.info.ownerAvatar} width="20" height="20" />
+      <img src={gitHubData.info.ownerAvatar} alt="" width="20" height="20" loading="lazy" />
       <a target="_blank" href={`https://github.com/${gitHubData.info.ownerUsername}`}>
         {gitHubData.info.ownerUsername}
       </a>
@@ -148,36 +161,68 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
     </span>
     <h4>Homepage</h4>
     <a href={gitHubData.info.homepage}>{gitHubData.info.homepage}</a>
-    <h4>License</h4>
-    <p>{gitHubData.info.license}</p>
-    <h4>Created</h4>
-    <p title={timeAgo(gitHubData.info.createdAt)}>{formatDate(gitHubData.info.createdAt)}</p>
-    <h4>Last Updated</h4>
-    <p title={timeAgo(gitHubData.info.updatedAt)}>{formatDate(gitHubData.info.updatedAt)}</p>
-    { gitHubData.versions.length > 0 && (
-      <h4>Latest version</h4>
-      <p title={gitHubData.versions[0].commit}>
-        {gitHubData.versions[0].name}
-        <a href={gitHubData.versions[0].zipball}><FontAwesome iconName="download" /></a>
-      </p>
-    )}
-    <h4>Primary Language</h4>
-    <p>{gitHubData.info.language}</p>
-    <h4>Size</h4>
-    <p>{formatBigNumber(gitHubData.info.size)} KB</p>
-    <h4>Stars</h4>
-    <p>{formatBigNumber(gitHubData.info.scarCount)}</p>
-    <h4>Forks</h4>
-    <p>{formatBigNumber(gitHubData.info.forksCount)}</p>
-    <h4>Watchers</h4>
-    <p>{formatBigNumber(gitHubData.info.watchersCount)}</p>
-
+    <h4>Repository</h4>
+    <ul class="list-table">
+      <li>
+        <span class="lbl">License</span>
+        <span class="val" title={gitHubData.info.licenseName}>{formatLicense(gitHubData.info.license)}</span>
+      </li>
+      <li>
+        <span class="lbl">Created</span>
+        <span class="val" title={timeAgo(gitHubData.info.createdAt)}>{formatDate(gitHubData.info.createdAt)}</span>
+      </li>
+      <li>
+        <span class="lbl">Primary language</span>
+        <span class="val">{gitHubData.info.language}</span>
+      </li>
+      <li>
+        <span class="lbl">Size</span>
+        <span class="val">{formatBigNumber(gitHubData.info.size)} KB</span>
+      </li>
+      <li>
+        <span class="lbl">Stars</span>
+        <span class="val">{formatBigNumber(gitHubData.info.starCount)}</span>
+      </li>
+      <li>
+        <span class="lbl">Forks</span>
+        <span class="val">{formatBigNumber(gitHubData.info.forksCount)}</span>
+      </li>
+      <li>
+        <span class="lbl">Watchers</span>
+        <span class="val">{formatBigNumber(gitHubData.info.watchersCount)}</span>
+      </li>
+    </ul>
   </div>
   <div class="right">
     <h4>Language Usage</h4>
-    <img class="languages-img" width="600" src={languageChart} alt="Language Usage" />
-    <h4>Star History</h4>
-    <img class="languages-img" width="600" src={`https://api.star-history.com/svg?repos=${repo}&type=Date`} alt="Star History" />
+    <img class="languages-img" width="600" src={languageChart} alt="Language Usage" loading="lazy" />
+    <h4>Project Health</h4>
+    { badges.length > 0 && (
+      <span class="badges">
+        {badges.map((badge) => (
+          <span class:list={['badge', { alert: badge.alert }]}>{badge.label}</span>
+        ))}
+      </span>
+    )}
+    <ul class="list-table">
+      <li>
+        <span class="lbl">Last commit</span>
+        <span class="val" title={formatDate(gitHubData.info.pushedAt)}>{timeAgo(gitHubData.info.pushedAt)}</span>
+      </li>
+      <li>
+        <span class="lbl">Open issues</span>
+        <span class="val">{formatBigNumber(gitHubData.info.openIssues)}</span>
+      </li>
+      { gitHubData.versions.length > 0 && (
+        <li>
+          <span class="lbl">Latest release</span>
+          <span class="val" title={gitHubData.versions[0].commit}>
+            <a href={`https://github.com/${repo}/releases`} target="_blank">{gitHubData.versions[0].name}</a>
+            <a href={gitHubData.versions[0].zipball} title="Download source"><FontAwesome iconName="download" /></a>
+          </span>
+        </li>
+      )}
+    </ul>
   </div>
   <div class="long-list-data">
     <div class="left list-wrap">
@@ -185,7 +230,7 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
       <ul>
         {gitHubData.contributors.map((contributor) => (
           <li>
-            <img src={contributor.avatar} width="20" height="20" />
+            <img src={contributor.avatar} alt="" width="20" height="20" loading="lazy" />
             <a href={`https://github.com/${contributor.username}`} target="_blank">
               @{contributor.username}
               </a> ({contributor.contributions})
@@ -198,7 +243,7 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
       <ul>
         {gitHubData.commits.map((commit) => (
           <li>
-            <img src={commit.authorAvatar} width="20" height="20" />
+            <img src={commit.authorAvatar} alt="" width="20" height="20" loading="lazy" />
             <a href={`https://github.com/${commit.authorUsername}`} target="_blank">
               {commit.authorName}
             </a>
@@ -237,6 +282,10 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
     }
   }
 
+  .list-table li .val a :global(svg) {
+    width: 1rem;
+  }
+
   @include detail-info-base;
 
   .tags {
@@ -251,14 +300,32 @@ const languageChart = `https://quickchart.io/chart?c=${generateChartData(gitHubD
       opacity: var(--opacity-subtle);
     }
   }
-  ul {
+  .long-list-data ul {
     padding-left: var(--space-md);
     list-style: circle;
     max-height: 400px;
     overflow: auto;
   }
   .languages-img {
-    width: 100%;
+    width: 80%;
+    display: flex;
+    margin: 0 auto;
     border-radius: var(--curve-sm);
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-sm);
+    .badge {
+      @include changelog-badge;
+      background: var(--accent-3-translucent);
+      color: var(--foreground);
+      &.alert {
+        background: color-mix(in srgb, var(--changelog-rej) 33%, transparent);
+        color: var(--changelog-rej);
+      }
+    }
   }
 </style>

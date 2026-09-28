@@ -4,30 +4,27 @@ import Hero from '@components/Hero.astro';
 import Search from '@components/things/Search.svelte';
 import SectionList from '@components/things/SectionList.astro';
 import SavedServices from '@components/things/SavedServices.svelte';
+import LatestUpdates from '@components/things/LatestUpdates.astro';
 
 import { fetchData } from '@utils/fetch-data';
-import Button from '@components/form/Button.astro';
 import type { Category } from 'src/types/Service';
 
 const categories = (await fetchData())?.categories || ([] as Category[]);
 
 const description =
-	'Privacy is a fundamental human right; ' +
-	"without it, we're just open books in a world where everyone's " +
-	"watching. Let's take control back.\n" +
-	'Migrating open-source applications which do not collect, sell or log your data is a great first step.' +
-	'Awesome Privacy is a directory of alternative privacy-respecting software and services.';
+	'Find privacy-respecting alternatives to the apps and services you use every day. ' +
+	'A curated directory of open source, secure and ad-free software.';
 ---
 
-<Layout title="Home | Awesome Privacy" description={description}>
+<Layout description={description}>
 	<Hero />
 	<main>
 		<div class="action-card">
-			<Search client:visible data={categories} />
+			<Search client:visible />
 			<span class="action-divider">or</span>
-			<a href="/all" class="browse-cta"> Browse All Listings &rarr; </a>
+			<a href="/all/" class="browse-cta"> Browse All Listings &rarr; </a>
 		</div>
-		<h2 class="browse-title"><a href="/all">Categories</a></h2>
+		<h2 class="browse-title"><a href="/all/">Categories</a></h2>
 		<ul class="categories">
 			{
 				categories.map((category) => (
@@ -37,16 +34,18 @@ const description =
 				))
 			}
 		</ul>
-		<div class="view-all">
-			<span>Or, just</span>
-			<Button url="/all" text="View Everything" />
+		<div class="categories-footer">
+			<a class="small-button" href="/all/">View everything &rarr;</a>
 		</div>
 
-		<h2><a href="/inventory">Saved Items</a></h2>
-		<SavedServices allData={categories} client:load />
+		<h2><a href="/changelog/">Latest Updates</a></h2>
+		<LatestUpdates categories={categories} />
+
+		<h2><a href="/inventory/">Saved Items</a></h2>
+		<SavedServices client:load />
 
 		<h2>
-			<a href="/about">About</a>
+			<a href="/about/">About</a>
 		</h2>
 		<div class="about-summary">
 			<p>
@@ -72,10 +71,9 @@ const description =
 					href="https://github.com/sponsors/lissy93">sponsoring me</a
 				> on GitHub.
 			</p>
-		</div>
-		<div class="view-all">
-			<span>Want to learn more?</span>
-			<Button url="/about" text="Keep Reading..." />
+			<div class="about-footer">
+				<a class="small-button" href="/about/">Keep reading &rarr;</a>
+			</div>
 		</div>
 	</main>
 </Layout>
@@ -92,21 +90,17 @@ const description =
 		@media (max-width: 768px) {
 			padding: 0;
 		}
-		.view-all {
-			text-align: center;
-			width: 16rem;
-			margin: 0 auto;
-			span {
-				opacity: var(--opacity-dim);
-				font-size: var(--text-base);
-			}
+		.categories-footer {
+			display: flex;
+			justify-content: flex-end;
+			margin: var(--space-md) 0;
 		}
 	}
 	.action-card {
 		display: flex;
 		align-items: end;
 		gap: var(--space-md);
-		background: var(--accent-fg);
+		background: var(--surface);
 		border: var(--border-heavy);
 		border-radius: var(--curve-sm);
 		box-shadow: var(--shadow-lg);
@@ -129,7 +123,7 @@ const description =
 			flex-shrink: 0;
 			padding: var(--space-sm) var(--space-lg);
 			background: var(--accent-3);
-			color: var(--accent-fg);
+			color: var(--accent-3-fg);
 			font-family: var(--font-subtitle);
 			font-size: var(--text-md);
 			font-weight: bold;
@@ -157,19 +151,19 @@ const description =
 
 	h2 {
 		font-size: var(--text-4xl);
-		color: var(--accent-3);
+		color: var(--accent-3-text);
 		font-family: var(--font-subtitle);
 		text-align: center;
 		margin: var(--space-xl) 0 var(--space-md) 0;
 		a {
 			text-decoration: none;
-			color: var(--accent-3);
+			color: var(--accent-3-text);
 			@include underline-hover(var(--accent));
 		}
 	}
 
 	.about-summary {
-		background: var(--accent-fg);
+		background: var(--surface);
 		border: var(--border-heavy);
 		border-radius: var(--curve-sm);
 		box-shadow: var(--shadow-md);
@@ -177,6 +171,11 @@ const description =
 		width: 100%;
 		box-sizing: border-box;
 		margin: 0 auto;
+		.about-footer {
+			display: flex;
+			justify-content: flex-end;
+			margin-top: var(--space-md);
+		}
 	}
 
 	.categories {
@@ -184,7 +183,7 @@ const description =
 		column-gap: var(--space-md);
 		padding: 0;
 		.category {
-			background: var(--accent-fg);
+			background: var(--surface);
 			border: var(--border-heavy);
 			border-radius: var(--curve-sm);
 			box-shadow: var(--shadow-md);
@@ -215,7 +214,7 @@ const description =
 						color: var(--foreground);
 					}
 					.service-count {
-						color: var(--accent-3);
+						color: var(--accent-3-text);
 					}
 				}
 			}

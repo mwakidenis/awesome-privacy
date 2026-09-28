@@ -6,11 +6,11 @@ import os
 import sys
 from datetime import datetime, timezone
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s [%(filename)s] %(message)s",
-    stream=sys.stderr,
-)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 ARTIFACTS_DIR = "/tmp/artifacts"
 OUTPUT_DIR = "/tmp/pr-meta"
@@ -220,8 +220,10 @@ def main():
             with open(os.path.join(OUTPUT_DIR, "run-id.txt"), "w") as f:
                 f.write(run_id)
 
+        logger.info("Aggregating findings from all check jobs in %s", ARTIFACTS_DIR)
         errors, warnings = collect_findings()
         all_findings = errors + warnings
+        logger.info("Collected %d error(s) and %d warning(s)", len(errors), len(warnings))
         with open(os.path.join(OUTPUT_DIR, "findings-count.txt"), "w") as f:
             f.write(str(len(all_findings)))
         with open(os.path.join(OUTPUT_DIR, "error-count.txt"), "w") as f:
@@ -233,10 +235,12 @@ def main():
                            repo_stats)
 
         comment = format_comment(all_findings, user, changes_summary, run_id, repo_stats)
-        with open(os.path.join(OUTPUT_DIR, "comment.md"), "w") as f:
+        comment_path = os.path.join(OUTPUT_DIR, "comment.md")
+        with open(comment_path, "w") as f:
             f.write(comment)
+        logger.info("Wrote PR comment to %s", comment_path)
     except Exception as exc:
-        logging.error("Unhandled error in main: %s", exc, exc_info=True)
+        logger.error("Unhandled error in main: %s", exc, exc_info=True)
 
     sys.exit(0)
 

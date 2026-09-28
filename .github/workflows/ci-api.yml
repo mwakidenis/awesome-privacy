@@ -1,0 +1,221 @@
+# CI checks for the API, run on PRs touching api/ and manually via dispatch
+name: 🚦 API CI
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - '.github/workflows/ci-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🛡️ Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+
+  format:
+    name: 💅 Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+
+  typecheck:
+    name: 🧩 Typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run build:data
+      - run: bun run typecheck
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run build:data
+      - run: bun run test
+
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - name: Verify bundle output
+        run: test -f dist/index.workers.js || { echo "❌ worker bundle not produced"; exit 1; }
+
+  smoke:
+    name: 💨 Smoke Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - run: bun install --frozen-lockfile
+      - run: bun run smoke
+
+  docker-smoke:
+    name: 🐳 Docker Smoke
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.run.outcome }}
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Build and run container
+        id: run
+        continue-on-error: true
+        run: bash tests/docker-smoke.sh
+        timeout-minutes: 10
+
+  dependency-review:
+    name: 🔒 Dependency Audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: moderate
+
+  secret-scan:
+    name: 🔑 Secret Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan PR diff for secrets
+        uses: trufflesecurity/trufflehog@v3.95.5
+        with:
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified
+
+  # Renders a markdown table of every check at the end
+  summary:
+    name: 📋 Summary
+    runs-on: ubuntu-latest
+    if: always()
+    continue-on-error: true
+    needs:
+      - lint
+      - format
+      - typecheck
+      - test
+      - build
+      - smoke
+      - docker-smoke
+      - dependency-review
+      - secret-scan
+    steps:
+      - name: Render summary
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          label() {
+            case "$1" in
+              lint) echo "🛡️ Lint" ;;
+              format) echo "💅 Format" ;;
+              typecheck) echo "🧩 Typecheck" ;;
+              test) echo "🧪 Test" ;;
+              build) echo "🏗️ Build" ;;
+              smoke) echo "💨 Smoke Test" ;;
+              docker-smoke) echo "🐳 Docker Smoke" ;;
+              dependency-review) echo "🔒 Dependency Audit" ;;
+              secret-scan) echo "🔑 Secret Scan" ;;
+              *) echo "$1" ;;
+            esac
+          }
+          status() {
+            case "$1" in
+              success) echo "✅ Passed" ;;
+              skipped) echo "⏭️ Skipped" ;;
+              cancelled) echo "🚫 Cancelled" ;;
+              failure) [ "$2" = docker-smoke ] && echo "⚠️ Warnings" || echo "❌ Failed" ;;
+              *) echo "❔ $1" ;;
+            esac
+          }
+          {
+            echo "## API CI Summary"
+            echo ""
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for job in $(echo "$NEEDS" | jq -r 'keys[]'); do
+            result=$(echo "$NEEDS" | jq -r --arg j "$job" '.[$j].result')
+            if [ "$job" = docker-smoke ]; then
+              result=$(echo "$NEEDS" | jq -r '."docker-smoke".outputs.result // "skipped"')
+            fi
+            echo "| $(label "$job") | $(status "$result" "$job") |" >> "$GITHUB_STEP_SUMMARY"
+          done

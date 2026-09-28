@@ -8,6 +8,7 @@ import ServiceList from '@components/things/ServiceList.astro';
 import type { AwesomePrivacy, Section, Service, ShortService } from '../types/Service';
 import { fetchData, slugify } from '@utils/fetch-data';
 import { parseMarkdown } from '@utils/parse-markdown';
+import { truncate } from '@utils/meta-tags';
 
 interface Props {
   slug: string,
@@ -66,38 +67,35 @@ const makeBreadcrumbs = () => {
  * Make a string page intro, for the description tag
  */
 const makeDescriptionTag = () => {
-  let description = `Privacy respecting ${title}. `;
+  let description = `Privacy-respecting ${title}. `;
   if (services && services.length > 0) {
-    const serviceList = services.map((serv: Service) => serv.name);
-    description += `Compare ${serviceList.join(' vs ')} and more private, open source apps and services now. `
+    description += `Compare ${services.map((serv: Service) => serv.name).join(', ')}. `;
   } else {
     description += `Find private apps and services. This section is still a work in progress. `;
   }
   if (alternativeTo && alternativeTo.length > 0) {
-    description += `The best secure encrypted alternatives to ${alternativeTo.join(', ')} in 2024. `;
+    description += `The best secure, encrypted alternatives to ${alternativeTo.join(', ')}.`;
   }
-  description += 'All this, and many more free and awesome tools and software.'
-  return description;
+  return truncate(description.trim());
 };
 
 const makeCarasolData = () => {
+  if (!services.length) return undefined;
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "itemListElement": [
-      services.map((service, index) => ({
-        "@type": "ListItem",
-        "position": index + 1,
-        "url": `https://awesome-privacy.xyz/${slugify(categoryName)}/${slugify(title)}/${slugify(service.name)}`,
-        "item": {
-          "@type": "Service",
-          "name": service.name,
-          "description": service.description,
-          "image": service.icon,
-          "url": `https://awesome-privacy.xyz/${slugify(categoryName)}/${slugify(title)}/${slugify(service.name)}`
-        }
-      })),
-    ]
+    "itemListElement": services.map((service, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `https://awesome-privacy.xyz/${slugify(categoryName)}/${slugify(title)}/${slugify(service.name)}/`,
+      "item": {
+        "@type": "Service",
+        "name": service.name,
+        "description": service.description,
+        "image": service.icon,
+        "url": `https://awesome-privacy.xyz/${slugify(categoryName)}/${slugify(title)}/${slugify(service.name)}/`
+      }
+    }))
   }
 };
 
@@ -151,12 +149,12 @@ const { previous, next } = makePaginationLinks();
     <div class="breadcrumbs">
       <span>
         <a href="/">Awesome Privacy</a>
-        ➔ <a href={`/${slugify(categoryName)}`}>{categoryName}</a>
-        ➔ <a href={`/${slugify(categoryName)}/${slugify(title)}`}>{title}</a>
+        ➔ <a href={`/${slugify(categoryName)}/`}>{categoryName}</a>
+        ➔ <a href={`/${slugify(categoryName)}/${slugify(title)}/`}>{title}</a>
       </span>
     </div>
 
-    <h2>{title}</h2>
+    <h1>{title}</h1>
 
     {intro && (
       <section class="intro">
@@ -177,7 +175,7 @@ const { previous, next } = makePaginationLinks();
       </p>
       <p>
         Discover the best {title} tools for Android, iPhone, Linux, PC and Chrome to download now.
-        And choose secure, self-hosted, peer-to-peer and independant alternatives in 2024
+        And choose secure, self-hosted, peer-to-peer and independant alternatives
       </p>
       <p>
         <b>Stop the invasion of privacy from big tech, improve data security stay safe.</b>
@@ -187,7 +185,7 @@ const { previous, next } = makePaginationLinks();
 
     {notableMentions && (
       <section class="notable-mentions">
-        <h3>Notable Mentions</h3>
+        <h2>Notable Mentions</h2>
         { Array.isArray(notableMentions) ?
           <ul>
             {notableMentions.map((mention) => (
@@ -207,39 +205,39 @@ const { previous, next } = makePaginationLinks();
 
     {furtherInfo && (
       <section class="further-info">
-        <h3>Notes</h3>
+        <h2>Notes</h2>
         <p set:html={parseMarkdown(furtherInfo)}></p>
       </section>
     )}
 
     {wordOfWarning && (
       <section class="word-of-warning">
-        <h3>Word of Warning</h3>
+        <h2>Word of Warning</h2>
         <p set:html={parseMarkdown(wordOfWarning)}></p>
       </section>
     )}
 
     {services.length > 0 && (<section class="submit-alternative">
-      <h3>Submit New Entry</h3>
+      <h2>Submit New Entry</h2>
       <p>
         Are we missing anything?
-        You can help us improve this page, by <a href="/submit">submitting a new entry</a>
+        You can help us improve this page, by <a href="/submit/">submitting a new entry</a>
       </p>
     </section>
     )}
 
     <div class="pagination-navigation">
       { previous ? (
-        <Button url={`/${slugify(categoryName)}/${slugify(previous)}`}>
+        <Button url={`/${slugify(categoryName)}/${slugify(previous)}/`}>
           <span>← Previous</span>
           <p>{previous}</p>
         </Button>
       ) : <p class="nothing"></p>}
-      <a href={`/${slugify(categoryName)}`} class="go-to-category">
+      <a href={`/${slugify(categoryName)}/`} class="go-to-category">
         View all in {categoryName} ({otherSections.length})
       </a>
       { next && (
-        <Button url={`/${slugify(categoryName)}/${slugify(next)}`}>
+        <Button url={`/${slugify(categoryName)}/${slugify(next)}/`}>
           <span>Next →</span>
           <p>{next}</p>
         </Button>
@@ -257,7 +255,8 @@ section {
   }
 }
 
-h2 {
+h1 {
+    font-family: var(--font-subtitle);
     font-size: var(--text-3xl);
     margin: -2rem 0 var(--space-lg) -2rem;
     box-shadow: var(--shadow-lg);

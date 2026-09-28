@@ -4,13 +4,18 @@ Enforces the single-entry rule and outputs a JSON diff to /tmp/pr-diff.json.
 
 import argparse
 import json
+import logging
 import os
 import sys
 
 import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import utils
 from yaml_diff import build_index, diff_index, load_yaml_at_ref
+
+utils.setup_logging()
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(PROJECT_ROOT, "awesome-privacy.yml")
@@ -21,17 +26,12 @@ EXIT_PASS = 0
 EXIT_RULE_VIOLATION = 1
 EXIT_RUNTIME_ERROR = 2
 
-_use_color = sys.stderr.isatty() and not os.environ.get("NO_COLOR")
-red = (lambda s: f"\033[31m{s}\033[0m") if _use_color else (lambda s: s)
-green = (lambda s: f"\033[32m{s}\033[0m") if _use_color else (lambda s: s)
-yellow = (lambda s: f"\033[33m{s}\033[0m") if _use_color else (lambda s: s)
-
 
 def load_base_yaml(base_ref):
     """Load the YAML from the base ref using git show."""
     data = load_yaml_at_ref(base_ref, PROJECT_ROOT)
     if data is None:
-        print(yellow("awesome-privacy.yml not found in base ref, treating as empty"), file=sys.stderr)
+        logger.warning("awesome-privacy.yml not found in base ref, treating as empty")
         return {"categories": []}
     return data
 
@@ -42,7 +42,7 @@ def load_head_yaml():
         with open(DATA_PATH) as f:
             return yaml.safe_load(f)
     except (FileNotFoundError, yaml.YAMLError) as e:
-        print(red(f"Failed to load head YAML: {e}"), file=sys.stderr)
+        logger.error("Failed to load head YAML: %s", e)
         sys.exit(EXIT_RUNTIME_ERROR)
 
 
@@ -57,12 +57,12 @@ def write_github_output(name, value):
 def find_duplicate_names(data):
     """Find duplicate service names within the same section."""
     duplicates = []
-    for cat in data.get("categories", []):
+    for cat in data.get("categories") or []:
         cn = cat.get("name", "")
-        for sec in cat.get("sections", []):
+        for sec in cat.get("sections") or []:
             sn = sec.get("name", "")
             seen = {}
-            for svc in sec.get("services", []):
+            for svc in sec.get("services") or []:
                 name = svc.get("name", "")
                 if name in seen:
                     duplicates.append((cn, sn, name))
@@ -125,6 +125,7 @@ def main():
     parser.add_argument("--base-ref", required=True)
     args = parser.parse_args()
 
+    logger.info("Diffing awesome-privacy.yml against base ref %s", args.base_ref)
     base = load_base_yaml(args.base_ref)
     head = load_head_yaml()
 
@@ -176,24 +177,26 @@ def main():
     write_github_output("has_service_changes", str(bool(added or removed or modified)).lower())
     write_diff_summary(diff_result)
 
+    logger.info("Diff: services +%d/-%d/~%d, sections %d, categories %d, duplicates %d",
+                len(added), len(removed), len(modified), len(sections), len(categories), len(dup_entries))
+
     added_count = len(added)
     if added_count > 1:
-        print(red(f"Single-entry rule violation: {added_count} service additions found."), file=sys.stderr)
+        logger.error("Single-entry rule violation: %d service additions found", added_count)
         sys.exit(EXIT_RULE_VIOLATION)
     added_sections = [s for s in sections if s["change_type"] == "added_section"]
     if added_count == 0 and len(added_sections) > 1:
-        print(red(f"Single-entry rule violation: {len(added_sections)} section additions found."), file=sys.stderr)
+        logger.error("Single-entry rule violation: %d section additions found", len(added_sections))
         sys.exit(EXIT_RULE_VIOLATION)
 
     if duplicates:
         names = ", ".join(f"{d[2]} (in {d[0]} → {d[1]})" for d in duplicates)
-        print(red(f"Duplicate service names found: {names}"), file=sys.stderr)
+        logger.error("Duplicate service names found: %s", names)
         sys.exit(EXIT_RULE_VIOLATION)
 
     total = len(added) + len(removed) + len(modified)
-    print(green(f"Single-entry rule passed. {total} service "
-                f"({added_count} added), {len(sections)} section, "
-                f"{len(categories)} category change(s)."))
+    logger.info("Single-entry rule passed: %d service change(s) (%d added), %d section, %d category change(s)",
+                total, added_count, len(sections), len(categories))
     sys.exit(EXIT_PASS)
 
 

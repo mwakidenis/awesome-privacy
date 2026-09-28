@@ -5,7 +5,7 @@ import Buton from '@components/form/Button.astro';
 
 <Layout title="404 | Awesome Privacy">
 	<article class="oh-crap">
-		<h2>404</h2>
+		<h1>404</h1>
 		<p class="what-happened">Page not found 😢</p>
 		<p class="why-happened">
 			It seems this page doesn't exist (yet). We're sorry about that.
@@ -16,13 +16,13 @@ import Buton from '@components/form/Button.astro';
 			Looking for somewhere else?
 			<ul>
 				<li>
-					<a href="/search">Search</a>
+					<a href="/search/">Search</a>
 				</li>
 				<li>
-					<a href="/browse">Browse</a>
+					<a href="/browse/">Browse</a>
 				</li>
 				<li>
-					<a href="/about">About</a>
+					<a href="/about/">About</a>
 				</li>
 				<li>
 					<a href="https://github.com/lissy93/awesome-privacy">Source</a>
@@ -42,7 +42,8 @@ import Buton from '@components/form/Button.astro';
 		align-items: center;
 		justify-content: center;
 		min-height: calc(100vh - 6rem);
-		h2 {
+		h1 {
+			font-family: var(--font-subtitle);
 			font-size: 12rem;
 			margin: 0;
 		}

@@ -1,0 +1,100 @@
+name: 🚦 Web CI
+
+on:
+  pull_request:
+    paths: ['web/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: 🧼 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - run: corepack enable
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: web/.nvmrc
+          cache: yarn
+          cache-dependency-path: web/yarn.lock
+      - run: yarn install --immutable
+      - run: yarn lint
+
+  format:
+    name: 💅 Format
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - run: corepack enable
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: web/.nvmrc
+          cache: yarn
+          cache-dependency-path: web/yarn.lock
+      - run: yarn install --immutable
+      - run: yarn format:check
+
+  typecheck:
+    name: 🧩 Typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - run: corepack enable
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: web/.nvmrc
+          cache: yarn
+          cache-dependency-path: web/yarn.lock
+      - run: yarn install --immutable
+      - run: yarn typecheck
+
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - run: corepack enable
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: web/.nvmrc
+          cache: yarn
+          cache-dependency-path: web/yarn.lock
+      - run: yarn install --immutable
+      - run: yarn test
+
+  summary:
+    name: 💬 Summary
+    if: always()
+    needs: [lint, format, typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build results table
+        run: |
+          em() { if [ "$1" = "success" ]; then echo "pass ✅"; else echo "FAIL ❌"; fi; }
+          line() { echo "| $1 | \`$2\` | $(em "$3") |"; }
+
+          {
+            echo "## Web Checks Summary"
+            echo ""
+            echo "| Check | Command | Result |"
+            echo "|-------|---------|--------|"
+            line "Lint"      "yarn lint"         "${{ needs.lint.result }}"
+            line "Format"    "yarn format:check" "${{ needs.format.result }}"
+            line "Typecheck" "yarn typecheck"    "${{ needs.typecheck.result }}"
+            line "Test"      "yarn test"         "${{ needs.test.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,5 +1,5 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 import NavBar from '@components/scafold/NavBar.astro';
 import Footer from '@components/scafold/Footer.astro';
 import config from '../site-config';
@@ -27,6 +27,15 @@ const {
 	customSchemaJson,
 } = Astro.props;
 
+// Crumbs arrive as '/', 'api' or 'category/section', so normalise to a canonical URL
+const crumbUrl = (item: string) => {
+	const path = item.replace(/^\/+|\/+$/g, '');
+	return `https://awesome-privacy.xyz/${path && `${path}/`}`;
+};
+
+// Always advertise the trailing-slash form, so server-rendered routes agree with the sitemap
+const canonical = crumbUrl(Astro.url.pathname);
+
 const makeBreadcrumbs = () => {
 	if (!breadcrumbs) return null;
 	return {
@@ -36,7 +45,7 @@ const makeBreadcrumbs = () => {
 			'@type': 'ListItem',
 			position: index + 1,
 			name: breadcrumb.name,
-			item: `https://awesome-privacy.xyz/${breadcrumb.item}`,
+			item: crumbUrl(breadcrumb.item),
 		})),
 	};
 };
@@ -45,6 +54,7 @@ const makeSearchLd = () => {
 	return {
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
+		name: 'Awesome Privacy',
 		url: 'https://awesome-privacy.xyz/',
 		potentialAction: [
 			{
@@ -52,7 +62,7 @@ const makeSearchLd = () => {
 				target: {
 					'@type': 'EntryPoint',
 					urlTemplate:
-						'https://awesome-privacy.xyz/search?q={search_term_string}',
+						'https://awesome-privacy.xyz/search/{search_term_string}/',
 				},
 				'query-input': 'required name=search_term_string',
 			},
@@ -64,7 +74,19 @@ const makeSearchLd = () => {
 <!doctype html>
 <html lang="en" data-theme="dark">
 	<head>
-		<ViewTransitions />
+		<script is:inline>
+			const setTheme = () => {
+				const stored = localStorage.getItem('theme');
+				const prefersLight = matchMedia(
+					'(prefers-color-scheme: light)',
+				).matches;
+				document.documentElement.dataset.theme =
+					stored || (prefersLight ? 'light' : 'dark');
+			};
+			setTheme();
+			document.addEventListener('astro:after-swap', setTheme);
+		</script>
+		<ClientRouter />
 
 		<!-- Core info -->
 		<title>{title}</title>
@@ -80,9 +102,12 @@ const makeSearchLd = () => {
 			content={`Built by an actual human, in Astro. ${Astro.generator}`}
 		/>
 		<meta name="robots" content="index, follow" />
+		<link rel="canonical" href={canonical} />
 		<link
-			rel="canonical"
-			href={`https://awesome-privacy.xyz${Astro.url.pathname}`}
+			rel="alternate"
+			type="application/rss+xml"
+			title="Awesome Privacy — Changelog"
+			href="/rss.xml"
 		/>
 
 		<!-- Preload critical fonts -->
@@ -109,10 +134,7 @@ const makeSearchLd = () => {
 		<!-- Social media meta tags (Open Graphh + Twitter) -->
 		<meta property="og:site_name" content="Awesome Privacy" />
 		<meta property="og:type" content="website" />
-		<meta
-			property="og:url"
-			content={`https://awesome-privacy.xyz${Astro.url.pathname}`}
-		/>
+		<meta property="og:url" content={canonical} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta
@@ -120,7 +142,7 @@ const makeSearchLd = () => {
 			content="https://awesome-privacy.xyz/banner.png"
 		/>
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:url" content="https://awesome-privacy.xyz" />
+		<meta name="twitter:url" content={canonical} />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
 		<meta
@@ -169,8 +191,11 @@ const makeSearchLd = () => {
 		/>
 	</head>
 	<body>
+		<a href="#main-content" class="skip-link">Skip to content</a>
 		{!hideNav && <NavBar />}
-		<slot />
+		<div id="main-content">
+			<slot />
+		</div>
 		<Footer />
 	</body>
 </html>
@@ -190,14 +215,52 @@ const makeSearchLd = () => {
 	}
 	body {
 		margin: 0;
-		min-height: 100vh;
+		min-height: 100dvh;
+		display: flex;
+		flex-direction: column;
 		color: var(--foreground);
 		background: var(--background);
 	}
+	#main-content {
+		flex: 1;
+	}
 
 	:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--accent-text);
 		outline-offset: 2px;
+	}
+
+	.skip-link {
+		position: absolute;
+		left: var(--space-sm);
+		top: calc(var(--space-sm) * -10);
+		z-index: 200;
+		padding: var(--space-sm) var(--space-md);
+		font-family: var(--font-subtitle);
+		font-weight: bold;
+		color: var(--accent-fg);
+		background: var(--accent);
+		border: var(--border-heavy);
+		box-shadow: var(--shadow-sm);
+		transition: top 0.2s ease-in-out;
+		&:focus {
+			top: var(--space-sm);
+		}
+	}
+
+	/* Drop movement, keep colour/depth feedback so states stay legible */
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
+		*,
+		::before,
+		::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-property:
+				color, background-color, border-color, box-shadow, opacity !important;
+		}
 	}
 
 	.pagination-navigation {
@@ -245,11 +308,48 @@ const makeSearchLd = () => {
 			color: var(--foreground);
 			transition: var(--transition-fast);
 			&:hover {
-				color: var(--accent);
+				color: var(--accent-text);
 			}
 		}
 		@media (max-width: 768px) {
 			display: none;
+		}
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.page-title {
+		font-family: var(--font-subtitle);
+		font-size: var(--text-4xl);
+		color: var(--accent-3-text);
+		margin: var(--space-lg) 0 var(--space-md);
+		text-align: center;
+	}
+
+	.small-button {
+		display: inline-block;
+		font-family: var(--font-subtitle);
+		font-size: var(--text-sm);
+		font-weight: bold;
+		text-decoration: none;
+		color: var(--accent-fg);
+		background: var(--accent);
+		border: var(--border-light);
+		box-shadow: var(--shadow-sm);
+		padding: var(--space-xs) var(--space-md);
+		transition: var(--transition-normal);
+		&:hover {
+			box-shadow: var(--shadow-sm-hover);
 		}
 	}
 
@@ -271,6 +371,7 @@ const makeSearchLd = () => {
 	.notable-mentions,
 	.word-of-warning,
 	.submit-alternative {
+		h2,
 		h3 {
 			font-size: var(--text-lg);
 			margin: var(--space-md) 0;
@@ -285,7 +386,7 @@ const makeSearchLd = () => {
 				color: var(--foreground);
 				transition: var(--transition-fast);
 				&:hover {
-					color: var(--accent);
+					color: var(--accent-text);
 				}
 			}
 		}

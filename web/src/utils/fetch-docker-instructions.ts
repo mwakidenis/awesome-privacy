@@ -1,27 +1,27 @@
-import { error } from './logger';
+import { fetchEnrich } from './fetch-enrich';
 
-export const fetchDockerData = async (
+export const fetchDockerData = (
   serviceName: string,
-): Promise<TemplateResponse | null> => {
-  const endpoint = `https://docker-info.as93.workers.dev/${serviceName}`;
-  try {
-    const res = await fetch(endpoint);
-    if (!res.ok) {
-      error('Docker', `HTTP ${res.status} for ${serviceName} (${endpoint})`);
-      return null;
-    }
-    return await res.json();
-  } catch (err) {
-    error('Docker', `Network error for ${serviceName}: ${err}`);
-    return null;
-  }
-};
+): Promise<TemplateResponse | null> =>
+  fetchEnrich<TemplateResponse>(
+    'Docker',
+    `/v1/enrich/docker/${encodeURIComponent(serviceName)}`,
+    serviceName,
+    { missingIsExpected: true },
+  );
 
-interface DockerTemplatePort {
-  privatePort: number;
-  publicPort: number;
-  type: string; // Typically TCP/UDP
-}
+export const dockerHubUrl = (image: string): string | null => {
+  const segments = image.split('/');
+  if (segments.length > 1 && /[.:]/.test(segments[0])) return null;
+  const path = image.replace(/:[^/]*$/, '');
+  const [namespace, repo] = path.includes('/')
+    ? path.split('/')
+    : ['library', path];
+  if (!repo) return null;
+  return namespace === 'library'
+    ? `https://hub.docker.com/_/${repo}`
+    : `https://hub.docker.com/r/${namespace}/${repo}`;
+};
 
 interface DockerTemplateEnvironmentVariable {
   name: string;
@@ -31,22 +31,22 @@ interface DockerTemplateEnvironmentVariable {
 }
 
 interface DockerTemplateVolume {
-  bind: string;
   container: string;
+  bind?: string;
   readonly?: boolean;
 }
 
 interface DockerTemplate {
   name?: string;
-  title: string;
+  title?: string;
   description?: string;
   logo?: string;
-  image: string;
+  image?: string;
   categories?: string[];
-  ports?: DockerTemplatePort[];
+  ports?: string[];
   env?: DockerTemplateEnvironmentVariable[];
   volumes?: DockerTemplateVolume[];
-  restart_policy?: string; // Typically "no", "always", "unless-stopped", "on-failure"
+  restart_policy?: string;
 }
 
 interface DockerHubData {
@@ -80,6 +80,6 @@ export interface TemplateResponse {
   found: boolean;
   error: string | null;
   template?: DockerTemplate;
-  dockerHubData?: DockerHubData;
+  dockerHubData?: DockerHubData | null;
   usage?: DockerUsage;
 }

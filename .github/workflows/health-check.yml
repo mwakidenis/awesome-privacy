@@ -1,0 +1,72 @@
+name: 🩺 Listing Health Checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      category:
+        description: Just run for specific category (optional)
+        type: string
+      section:
+        description: Just run for a specific section (optional)
+        type: string
+      service:
+        description: Just run for a specific entry (optional)
+        type: string
+  schedule:
+    - cron: '0 17 * * 5'  # Weekly drift check. 5PM on a Friday, in time for weekend updates
+
+permissions:
+  contents: read
+
+jobs:
+  health-check:
+    name: Health check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -q -r lib/requirements.txt
+
+      - name: Run health check
+        id: check
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+          CATEGORY: ${{ inputs.category }}
+          SECTION: ${{ inputs.section }}
+          SERVICE: ${{ inputs.service }}
+        run: |
+          args=()
+          [ -n "$CATEGORY" ] && args+=(--category "$CATEGORY")
+          [ -n "$SECTION" ]  && args+=(--section  "$SECTION")
+          [ -n "$SERVICE" ]  && args+=(--service  "$SERVICE")
+          python lib/review-listings.py "${args[@]}" \
+            --save-json /tmp/findings.json \
+            --save-markdown /tmp/findings.md
+
+      - name: Write summary
+        if: always()
+        run: |
+          if [ -f /tmp/findings.md ]; then
+            cat /tmp/findings.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "We somehow lost the /tmp/findings.md file"
+          fi
+
+      - name: Upload findings JSON
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: listing-health-findings
+          path: /tmp/findings.json
+          if-no-files-found: ignore
+
+      - name: Fail if critical issues
+        if: steps.check.outcome == 'failure'
+        run: exit 1
